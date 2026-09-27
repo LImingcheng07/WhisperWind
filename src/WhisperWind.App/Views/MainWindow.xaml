@@ -9,18 +9,17 @@
         WindowStartupLocation="CenterScreen">
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="220" />
+            <ColumnDefinition Width="Auto" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
-        <!-- 左侧导航栏（国风风） -->
-        <ui:NavigationView x:Name="RootNav" Grid.Column="0"
+        <!-- 左侧导航 + 右侧内容由 NavigationView 内部 NavigationViewContentPresenter 托管 -->
+        <ui:NavigationView x:Name="RootNav" Grid.Column="0" Grid.ColumnSpan="2"
                            PaneDisplayMode="Left"
                            IsBackButtonVisible="Collapsed"
                            IsPaneToggleVisible="True"
                            OpenPaneLength="200"
-                           Background="#0F1A14"
-                           Frame="{Binding ElementName=ContentFrame}">
+                           Background="#0F1A14">
             <ui:NavigationView.MenuItems>
                 <ui:NavigationViewItem Content="此刻吹" TargetPageType="{x:Type views:NowPlayingView}" Icon="{ui:SymbolIcon Play24}" />
                 <ui:NavigationViewItem Content="曲库"   TargetPageType="{x:Type views:LibraryView}"  Icon="{ui:SymbolIcon MusicNote224}" />
@@ -30,10 +29,5 @@
                 <ui:NavigationViewItem Content="关于" TargetPageType="{x:Type views:AIView}" Icon="{ui:SymbolIcon Info24}" />
             </ui:NavigationView.FooterMenuItems>
         </ui:NavigationView>
-
-        <!-- 右侧内容（Frame 切换三页） -->
-        <Grid Grid.Column="1" Background="#1A2419">
-            <Frame x:Name="ContentFrame" />
-        </Grid>
     </Grid>
 </ui:FluentWindow>
