@@ -1,6 +1,6 @@
 using System;
-using System.IO;
 using System.Windows;
+using WhisperWind.App.Online;
 using WhisperWind.App.Services;
 using WhisperWind.App.ViewModels;
 
@@ -8,28 +8,31 @@ namespace WhisperWind.App.Views;
 
 public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
 {
-    private readonly MainViewModel _vm;
-
     public MainWindow()
     {
         InitializeComponent();
 
-        // 简易 DI
+        // === DI 容器（极简）===
         var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-        var player = new WindowsNotePlayer();
+        var settings = AppSettings.Load(appData);
+        var engine = new HarmonicaEngine(new WindowsNotePlayer());
         var watcher = new TargetWindowWatcher();
-        var engine = new HarmonicaEngine(player, watcher);
         var hotkey = new GlobalHotkeyService();
-        _vm = new MainViewModel(engine, watcher, hotkey, appData);
+        var importer = new MidiImportService(appData);
+        var online = new OnlineLibraryService(appData);
+        var ai = new AiAdvisorService();
 
-        DataContext = _vm;
-        Loaded += (_, _) => _vm.StartServices(this);
-        Closed += async (_, _) =>
+        var vm = new MainViewModel(engine, watcher, hotkey, importer, online, ai, settings, appData);
+
+        // 全局静态通道，让所有 Page 都能拿
+        WhisperWind.App.App.MainVM = vm;
+        DataContext = vm;
+
+        Loaded += (_, _) =>
         {
-            _vm.StopServices();
-            await engine.DisposeAsync();
-            watcher.Dispose();
-            hotkey.Dispose();
+            RootNav.Navigate(typeof(NowPlayingView));
+            vm.StartServices(this);
         };
+        Closed += (_, _) => vm.StopServices();
     }
 }

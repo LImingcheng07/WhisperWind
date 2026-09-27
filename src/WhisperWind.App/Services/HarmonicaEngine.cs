@@ -25,6 +25,7 @@ public sealed class HarmonicaEngine : IAsyncDisposable
     private Task? _runTask;
     private double _speed = 1.0;
 
+    public PlaybackPlan? CurrentPlan => _plan;
     public State Current { get; private set; } = State.Idle;
     public string? CurrentTrackPath { get; private set; }
     public double Speed => _speed;

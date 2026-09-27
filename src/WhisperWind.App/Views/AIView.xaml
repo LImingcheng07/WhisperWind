@@ -1,9 +1,42 @@
 <Page x:Class="WhisperWind.App.Views.AIView"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-      xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
-      Title="知音 AI">
+      xmlns:vm="clr-namespace:WhisperWind.App.ViewModels"
+      Title="知音"
+      d:DataContext="{d:DesignInstance vm:MainViewModel}"
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+      mc:Ignorable="d"
+      Loaded="OnLoaded">
     <Grid Margin="24">
-        <TextBlock Text="🧠 知音 AI · 敬请期待" FontSize="28" Foreground="#E6D9B0" />
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Text="🌙 知音 · AI 助手" FontSize="28" Foreground="#E6D9B0" Margin="0,0,0,16" FontWeight="Light" />
+
+        <Border Grid.Row="1" CornerRadius="16" Background="#1F2818" Padding="20" Margin="0,0,0,16">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <TextBlock Text="{Binding AiChatHistory}" Foreground="#E6D9B0" TextWrapping="Wrap" FontFamily="Microsoft YaHei" LineHeight="22" />
+            </ScrollViewer>
+        </Border>
+
+        <Border Grid.Row="2" CornerRadius="12" Background="#22301F" Padding="16" Margin="0,0,0,12">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBox Grid.Column="0" Text="{Binding AiChatInput, UpdateSourceTrigger=PropertyChanged}" Background="Transparent" Foreground="#E6D9B0" BorderThickness="0" FontSize="14" Padding="0" VerticalContentAlignment="Center" AcceptsReturn="False" KeyDown="OnInputKey" />
+                <Button Grid.Column="1" Content="问" Command="{Binding AskAiCommand}" Background="#C9A961" Foreground="White" Padding="16,6" Margin="8,0,0,0" BorderThickness="0" IsEnabled="{Binding AiBusy, Converter={StaticResource NotBool}}" />
+            </Grid>
+        </Border>
+
+        <TextBlock Grid.Row="3" Foreground="#A89870" FontSize="11" TextWrapping="Wrap">
+            <Run Text="💡" /><Run Text="在 Settings 设置你的 Anthropic API key 才能启用 AI。当前默认使用 claude-haiku-4-5。" /><LineBreak /><Run Text="  API key 仅存本地 %AppData%/WhisperWind/settings.json，不会上传。" />
+        </TextBlock>
     </Grid>
 </Page>

@@ -1,11 +1,14 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using WhisperWind.App.BuiltIn;
+using WhisperWind.App.Online;
 using WhisperWind.App.Services;
 
 namespace WhisperWind.App.ViewModels;
@@ -15,6 +18,10 @@ public partial class MainViewModel : ObservableObject
     private readonly HarmonicaEngine _engine;
     private readonly TargetWindowWatcher _watcher;
     private readonly GlobalHotkeyService _hotkey;
+    private readonly MidiImportService _importer;
+    private readonly OnlineLibraryService _online;
+    private readonly AiAdvisorService _ai;
+    private readonly AppSettings _settings;
     private readonly string _appDataDir;
 
     [ObservableProperty] private string _statusText = "准备就绪";
@@ -26,18 +33,40 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty] private string _errorMessage = "";
     [ObservableProperty] private bool _hasError;
 
+    // AI 状态
+    [ObservableProperty] private string _aiChatInput = "";
+    [ObservableProperty] private string _aiChatHistory = "（对话将在此显示）";
+    [ObservableProperty] private bool _aiBusy;
+
+    // 在线曲库
+    [ObservableProperty] private string _onlineStatus = "尚未刷新";
+    [ObservableProperty] private bool _onlineBusy;
+
     public ObservableCollection<TrackMeta> Tracks { get; } = new();
+    public ObservableCollection<OnlineTrackMeta> OnlineTracks { get; } = new();
 
     public MainViewModel(
         HarmonicaEngine engine,
         TargetWindowWatcher watcher,
         GlobalHotkeyService hotkey,
+        MidiImportService importer,
+        OnlineLibraryService online,
+        AiAdvisorService ai,
+        AppSettings settings,
         string appDataDir)
     {
         _engine = engine;
         _watcher = watcher;
         _hotkey = hotkey;
+        _importer = importer;
+        _online = online;
+        _ai = ai;
+        _settings = settings;
         _appDataDir = appDataDir;
+
+        // 注入配置
+        _ai.ApiKey = settings.AnthropicApiKey ?? "";
+        _ai.Model = settings.AiModel;
 
         _engine.StateChanged += OnEngineState;
         _engine.Error += msg => ShowError(msg);
@@ -89,8 +118,72 @@ public partial class MainViewModel : ObservableObject
     {
         if (meta == null) return;
         var path = Path.Combine(_appDataDir, "WhisperWind", "tracks", meta.FileName);
+        if (!File.Exists(path))
+            path = _importer.FullPath(meta.FileName);  // 用户曲目
         await _engine.LoadAsync(path);
         CurrentTrackText = meta.Name;
+    }
+
+    [RelayCommand]
+    private async Task ImportLocalMidiAsync()
+    {
+        try
+        {
+            var meta = _importer.PickAndImport();
+            if (meta == null) return;
+            Tracks.Add(meta);
+            await LoadTrackAsync(meta);
+        }
+        catch (Exception ex)
+        {
+            ShowError($"导入失败: {ex.Message}");
+        }
+    }
+
+    [RelayCommand]
+    private async Task RefreshOnlineAsync()
+    {
+        if (OnlineBusy) return;
+        OnlineBusy = true;
+        OnlineStatus = "拉取索引…";
+        OnlineTracks.Clear();
+        try
+        {
+            var list = await _online.FetchIndexAsync(_settings.OnlineIndexUrl);
+            foreach (var t in list) OnlineTracks.Add(t);
+            OnlineStatus = $"已加载 {list.Count} 首";
+        }
+        catch (Exception ex)
+        {
+            OnlineStatus = $"失败: {ex.Message}";
+        }
+        finally
+        {
+            OnlineBusy = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task DownloadOnlineAsync(OnlineTrackMeta? meta)
+    {
+        if (meta == null || OnlineBusy) return;
+        OnlineBusy = true;
+        OnlineStatus = $"下载 {meta.Name}…";
+        try
+        {
+            var path = await _online.DownloadAsync(meta);
+            var trackMeta = new TrackMeta($"{meta.Name} · {meta.Author}", Path.GetFileName(path));
+            Tracks.Add(trackMeta);
+            OnlineStatus = $"{meta.Name} 已加入曲库";
+        }
+        catch (Exception ex)
+        {
+            OnlineStatus = $"下载失败: {ex.Message}";
+        }
+        finally
+        {
+            OnlineBusy = false;
+        }
     }
 
     [RelayCommand]
@@ -113,6 +206,39 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void DismissError() => HasError = false;
 
+    [RelayCommand]
+    private async Task AskAiAsync()
+    {
+        if (AiBusy) return;
+        var input = AiChatInput?.Trim();
+        if (string.IsNullOrEmpty(input)) return;
+
+        AiBusy = true;
+        AiChatInput = "";
+        AiChatHistory += $"\n\n你: {input}\n知音: …";
+        try
+        {
+            var plan = _engine.CurrentPlan;
+            var reply = await _ai.AskAsync(input, plan, plan?.Warnings.ToList() ?? new());
+            AiChatHistory += reply;
+        }
+        catch (Exception ex)
+        {
+            AiChatHistory += $"\n(出错: {ex.Message})";
+        }
+        finally
+        {
+            AiBusy = false;
+        }
+    }
+
+    [RelayCommand]
+    private void ClearAiHistory()
+    {
+        _ai.ClearHistory();
+        AiChatHistory = "（对话将在此显示）";
+    }
+
     private void ShowError(string msg) => Application.Current.Dispatcher.Invoke(() =>
     {
         ErrorMessage = msg;
@@ -129,5 +255,11 @@ public partial class MainViewModel : ObservableObject
     {
         _hotkey.Stop();
         _watcher.Stop();
+    }
+
+    public void ReloadSettings(AppSettings s)
+    {
+        _ai.ApiKey = s.AnthropicApiKey ?? "";
+        _ai.Model = s.AiModel;
     }
 }

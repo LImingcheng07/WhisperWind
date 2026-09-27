@@ -8,8 +8,12 @@
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="pack://application:,,,/Wpf.Ui;component/Themes/Fluent/Fluent.xaml" />
             </ResourceDictionary.MergedDictionaries>
-            <converters:BoolToBrushConverter x:Key="BoolToBrushConverter" />
-            <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+            <converters:BoolToBrushConverter x:Key="BoolToBrush"
+                                             True="#7DBB6B"
+                                             False="#9A8866" />
+            <converters:BoolToVisibilityConverter x:Key="BoolToVisible" />
+            <converters:BoolToVisibilityConverter x:Key="InverseVisible" Invert="True" />
+            <converters:NotBoolConverter x:Key="NotBool" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>
