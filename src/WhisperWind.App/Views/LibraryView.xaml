@@ -1,7 +1,6 @@
 <Page x:Class="WhisperWind.App.Views.LibraryView"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-      xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
       Title="曲库">
     <Grid Margin="24">
         <Grid.RowDefinitions>
@@ -10,12 +9,12 @@
         </Grid.RowDefinitions>
         <TextBlock Grid.Row="0" Text="📚 曲库" FontSize="28" Foreground="#E6D9B0" Margin="0,0,0,16" />
         <Border Grid.Row="1" CornerRadius="16" Background="#22301F" Padding="20">
-            <ui:ListView x:Name="TrackList">
-                <ui:ListViewItem Content="鸟之诗 · Air" />
-                <ui:ListViewItem Content="送别 · 李叔同" />
-                <ui:ListViewItem Content="父亲 · 筷子兄弟" />
-                <ui:ListViewItem Content="千本桜 · 黒うさP" />
-            </ui:ListView>
+            <ListView x:Name="TrackList" Background="Transparent" Foreground="#E6D9B0">
+                <ListViewItem Content="鸟之诗 · Air" />
+                <ListViewItem Content="送别 · 李叔同" />
+                <ListViewItem Content="父亲 · 筷子兄弟" />
+                <ListViewItem Content="千本桜 · 黒うさP" />
+            </ListView>
         </Border>
     </Grid>
 </Page>

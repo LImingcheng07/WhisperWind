@@ -6,8 +6,7 @@
         Title="风声未止 · 三角洲自动口琴"
         Height="720" Width="1180"
         MinHeight="600" MinWidth="960"
-        WindowStartupLocation="CenterScreen"
-        ExtendsContentIntoTitleBar="True">
+        WindowStartupLocation="CenterScreen">
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="220" />
@@ -18,16 +17,17 @@
         <ui:NavigationView x:Name="RootNav" Grid.Column="0"
                            PaneDisplayMode="Left"
                            IsBackButtonVisible="Collapsed"
-                           IsSettingsVisible="False"
+                           IsPaneToggleVisible="True"
                            OpenPaneLength="200"
-                           Background="#0F1A14">
+                           Background="#0F1A14"
+                           Frame="{Binding ElementName=ContentFrame}">
             <ui:NavigationView.MenuItems>
-                <ui:NavigationViewItem Content="此刻吹" Tag="now" Icon="{ui:SymbolIcon Play24}" />
-                <ui:NavigationViewItem Content="曲库"   Tag="library" Icon="{ui:SymbolIcon MusicNote224}" />
-                <ui:NavigationViewItem Content="知音"   Tag="ai" Icon="{ui:SymbolIcon BrainCircuit24}" />
+                <ui:NavigationViewItem Content="此刻吹" TargetPageType="{x:Type views:NowPlayingView}" Icon="{ui:SymbolIcon Play24}" />
+                <ui:NavigationViewItem Content="曲库"   TargetPageType="{x:Type views:LibraryView}"  Icon="{ui:SymbolIcon MusicNote224}" />
+                <ui:NavigationViewItem Content="知音"   TargetPageType="{x:Type views:AIView}"       Icon="{ui:SymbolIcon BrainCircuit24}" />
             </ui:NavigationView.MenuItems>
             <ui:NavigationView.FooterMenuItems>
-                <ui:NavigationViewItem Content="关于" Tag="about" Icon="{ui:SymbolIcon Info24}" />
+                <ui:NavigationViewItem Content="关于" TargetPageType="{x:Type views:AIView}" Icon="{ui:SymbolIcon Info24}" />
             </ui:NavigationView.FooterMenuItems>
         </ui:NavigationView>
 

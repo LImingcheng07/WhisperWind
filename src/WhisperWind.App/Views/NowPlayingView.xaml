@@ -1,7 +1,6 @@
 <Page x:Class="WhisperWind.App.Views.NowPlayingView"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-      xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
       Title="此刻吹">
     <Grid Margin="24">
         <Grid.RowDefinitions>
@@ -32,10 +31,10 @@
 
                 <!-- 播放控制 -->
                 <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,16,0,0">
-                    <ui:Button Content="⏮ 上一首" Margin="6" Padding="14,8" />
-                    <ui:Button x:Name="PlayBtn" Content="▶ 演奏 F8" Appearance="Primary" Margin="6" Padding="20,8" Click="PlayBtn_Click" />
-                    <ui:Button Content="⏹ 停止 F9" Margin="6" Padding="14,8" />
-                    <ui:Button Content="⏭ 下一首" Margin="6" Padding="14,8" />
+                    <Button Content="⏮ 上一首" Margin="6" Padding="14,8" />
+                    <Button x:Name="PlayBtn" Content="▶ 演奏 F8" Margin="6" Padding="20,8" Click="PlayBtn_Click" Background="#C9A961" Foreground="White" BorderThickness="0" />
+                    <Button Content="⏹ 停止 F9" Margin="6" Padding="14,8" />
+                    <Button Content="⏭ 下一首" Margin="6" Padding="14,8" />
                 </StackPanel>
             </Grid>
         </Border>
@@ -53,7 +52,9 @@
                 </StackPanel>
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                     <TextBlock Text="目标窗口: " Foreground="#9FA88F" />
-                    <ui:Badge x:Name="TargetBadge" Content="未锁定" Appearance="Caution" />
+                    <Border Background="#C9A961" CornerRadius="8" Padding="8,4">
+                        <TextBlock x:Name="TargetBadge" Text="未锁定" Foreground="White" FontSize="12" />
+                    </Border>
                 </StackPanel>
             </Grid>
         </Border>
