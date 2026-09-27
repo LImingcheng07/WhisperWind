@@ -15,8 +15,8 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         // === DI 容器（极简）===
         var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
         var settings = AppSettings.Load(appData);
-        var engine = new HarmonicaEngine(new WindowsNotePlayer());
         var watcher = new TargetWindowWatcher();
+        var engine = new HarmonicaEngine(new WindowsNotePlayer(), watcher);
         var hotkey = new GlobalHotkeyService();
         var importer = new MidiImportService(appData);
         var online = new OnlineLibraryService(appData);
