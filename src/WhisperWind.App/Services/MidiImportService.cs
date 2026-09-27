@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Win32;
+using WhisperWind.App.BuiltIn;
 using WhisperWind.Core;
 
 namespace WhisperWind.App.Services;
