@@ -34,5 +34,5 @@
 - 依赖仅 1 个外部包（DryWetMidi，MIT）
 - 命名空间 `WhisperWind.Core`（库） / `WhisperWind.App`（UI）
 
-[Unreleased]: https://github.com/你的用户名/WhisperWind/compare/M1...HEAD
-[M1]: https://github.com/你的用户名/WhisperWind/releases/tag/M1
+[Unreleased]: https://github.com/LImingcheng07/WhisperWind/compare/M1...HEAD
+[M1]: https://github.com/LImingcheng07/WhisperWind/releases/tag/M1

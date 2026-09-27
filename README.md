@@ -33,7 +33,7 @@
 
 ```bash
 # 编译 Core 库
-git clone https://github.com/你的用户名/WhisperWind.git
+git clone https://github.com/LImingcheng07/WhisperWind.git
 cd WhisperWind
 dotnet test    # 跑通 30 单元测试
 ```
