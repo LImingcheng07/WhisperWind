@@ -12,22 +12,31 @@ using WhisperWind.Core;
 namespace WhisperWind.App.Services;
 
 /// <summary>
-/// AI 知音：通过 Anthropic Claude API 给演奏建议。
-/// 默认关闭（需要用户在 Settings 输入 API key）。
-/// 给的输入：当前曲目 + 演奏历史 + 用户消息；
-/// 输出：自然语言建议 + 可选动作（暂不支持 action，只给文）。
+/// AI 知音：支持 Anthropic Claude / OpenAI 兼容（含自建 / 中转 / Ollama / OpenRouter / 国产）/ 自定义 HTTP 端点。
+/// 默认关闭（用户在 Settings 填 API Key 启用）。密钥只存本地。
 /// </summary>
 public sealed class AiAdvisorService
 {
-    public const string DefaultModel = "claude-haiku-4-5-20251001";
-    public const string DefaultEndpoint = "https://api.anthropic.com/v1/messages";
+    public enum Provider
+    {
+        Anthropic,
+        OpenAI,
+        Custom,
+    }
+
+    // 默认模型 / 端点
+    public const string AnthropicModel = "claude-haiku-4-5-20251001";
+    public const string AnthropicEndpoint = "https://api.anthropic.com/v1/messages";
+    public const string OpenAIModel = "gpt-4o-mini";
+    public const string OpenAIEndpoint = "https://api.openai.com/v1/chat/completions";
+
+    public Provider CurrentProvider { get; set; } = Provider.Anthropic;
+    public string ApiKey { get; set; } = "";
+    public string Model { get; set; } = AnthropicModel;
+    public string Endpoint { get; set; } = AnthropicEndpoint;
+    public int MaxTokens { get; set; } = 1024;
 
     public bool IsEnabled => !string.IsNullOrWhiteSpace(ApiKey);
-
-    public string ApiKey { get; set; } = "";   // 由 Settings 写入
-    public string Model { get; set; } = DefaultModel;
-    public string Endpoint { get; set; } = DefaultEndpoint;
-    public int MaxTokens { get; set; } = 1024;
 
     private readonly HttpClient _http = new() { Timeout = TimeSpan.FromSeconds(60) };
     private readonly List<ChatTurn> _history = new();
@@ -37,19 +46,24 @@ public sealed class AiAdvisorService
     public async Task<string> AskAsync(string userMessage, PlaybackPlan? plan, IReadOnlyList<string> recentWarnings)
     {
         if (!IsEnabled)
-            return "🔕 AI 知音未启用。请在 Settings 里填入 Anthropic API Key 后重启。\n（密钥只存本地，不上传）";
+            return "🔕 AI 知音未启用。请在 Settings 填 API Key 后重启。\n（密钥只存本地，不上传）";
 
         var system = BuildSystemPrompt(plan, recentWarnings);
-        var messages = new List<object>
+        return CurrentProvider switch
         {
-            new { role = "user", content = system + "\n\n" + userMessage },
+            Provider.Anthropic => await AskAnthropicAsync(system, userMessage),
+            Provider.OpenAI or Provider.Custom => await AskOpenAIAsync(system, userMessage),
+            _ => "未知 provider",
         };
+    }
 
+    private async Task<string> AskAnthropicAsync(string system, string userMessage)
+    {
         var reqBody = new
         {
             model = Model,
             max_tokens = MaxTokens,
-            messages,
+            messages = new object[] { new { role = "user", content = system + "\n\n" + userMessage } },
         };
         var json = JsonSerializer.Serialize(reqBody);
         using var req = new HttpRequestMessage(HttpMethod.Post, Endpoint)
@@ -58,16 +72,51 @@ public sealed class AiAdvisorService
         };
         req.Headers.Add("x-api-key", ApiKey);
         req.Headers.Add("anthropic-version", "2023-06-01");
-        req.Headers.Add("anthropic-beta", "prompt-caching-2024-07-31");
 
         using var resp = await _http.SendAsync(req);
         var body = await resp.Content.ReadAsStringAsync();
         if (!resp.IsSuccessStatusCode)
-            throw new HttpRequestException($"Claude API {(int)resp.StatusCode}: {body[..Math.Min(400, body.Length)]}");
+            throw new HttpRequestException($"Anthropic {(int)resp.StatusCode}: {body[..Math.Min(400, body.Length)]}");
 
         using var doc = JsonDocument.Parse(body);
-        var text = doc.RootElement.GetProperty("content")[0].GetProperty("text").GetString()
-            ?? "(empty)";
+        var text = doc.RootElement.GetProperty("content")[0].GetProperty("text").GetString() ?? "(empty)";
+        _history.Add(new ChatTurn("user", userMessage));
+        _history.Add(new ChatTurn("assistant", text));
+        return text;
+    }
+
+    private async Task<string> AskOpenAIAsync(string system, string userMessage)
+    {
+        var messages = new List<object>
+        {
+            new { role = "system", content = system },
+            new { role = "user", content = userMessage },
+        };
+        // 注入历史
+        foreach (var h in _history)
+            messages.Add(new { role = h.Role, content = h.Content });
+
+        var reqBody = new
+        {
+            model = Model,
+            max_tokens = MaxTokens,
+            messages,
+            temperature = 0.7,
+        };
+        var json = JsonSerializer.Serialize(reqBody);
+        using var req = new HttpRequestMessage(HttpMethod.Post, Endpoint)
+        {
+            Content = new StringContent(json, Encoding.UTF8, "application/json"),
+        };
+        req.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", ApiKey);
+
+        using var resp = await _http.SendAsync(req);
+        var body = await resp.Content.ReadAsStringAsync();
+        if (!resp.IsSuccessStatusCode)
+            throw new HttpRequestException($"OpenAI {(int)resp.StatusCode}: {body[..Math.Min(400, body.Length)]}");
+
+        using var doc = JsonDocument.Parse(body);
+        var text = doc.RootElement.GetProperty("choices")[0].GetProperty("message").GetProperty("content").GetString() ?? "(empty)";
         _history.Add(new ChatTurn("user", userMessage));
         _history.Add(new ChatTurn("assistant", text));
         return text;

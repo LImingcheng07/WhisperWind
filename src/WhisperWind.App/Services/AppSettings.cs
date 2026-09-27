@@ -1,27 +1,30 @@
 using System;
 using System.IO;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace WhisperWind.App.Services;
 
-/// <summary>
-/// 用户配置持久化（%AppData%/WhisperWind/settings.json）。
-/// 当前支持：Anthropic API key / AI Model / 在线曲库索引 URL / 自定义主键。
-/// 不上传任何字段。
-/// </summary>
 public sealed class AppSettings
 {
-    public string? AnthropicApiKey { get; set; }
-    public string AiModel { get; set; } = AiAdvisorService.DefaultModel;
-    public string? OnlineIndexUrl { get; set; }
-    public string? KeyMappingOverride { get; set; }  // "F1,F2,F3,F4,F5,F6,F7,F8"
+    [JsonPropertyName("aiProvider")] public string AiProvider { get; set; } = "anthropic";
+    [JsonPropertyName("anthropicApiKey")] public string? AnthropicApiKey { get; set; }
+    [JsonPropertyName("openaiApiKey")] public string? OpenaiApiKey { get; set; }
+    [JsonPropertyName("customApiKey")] public string? CustomApiKey { get; set; }
+    [JsonPropertyName("aiModel")] public string AiModel { get; set; } = AiAdvisorService.AnthropicModel;
+    [JsonPropertyName("customEndpoint")] public string CustomEndpoint { get; set; } = "https://api.openai.com/v1/chat/completions";
+    [JsonPropertyName("onlineProvider")] public string OnlineProvider { get; set; } = "bitmidi";
+    [JsonPropertyName("customIndexUrl")] public string? CustomIndexUrl { get; set; }
 
-    private static string SettingsPath(string appDataDir) =>
-        Path.Combine(appDataDir, "WhisperWind", "settings.json");
+    private static string DefaultPath => Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+        "WhisperWind", "settings.json");
 
-    public static AppSettings Load(string appDataDir)
+    public static AppSettings Load(string? appDataDir = null)
     {
-        var path = SettingsPath(appDataDir);
+        var path = appDataDir is null
+            ? DefaultPath
+            : Path.Combine(appDataDir, "WhisperWind", "settings.json");
         if (!File.Exists(path)) return new AppSettings();
         try
         {
@@ -34,10 +37,13 @@ public sealed class AppSettings
         }
     }
 
-    public void Save(string appDataDir)
+    public void Save(string? appDataDir = null)
     {
-        Directory.CreateDirectory(Path.Combine(appDataDir, "WhisperWind"));
+        var path = appDataDir is null
+            ? DefaultPath
+            : Path.Combine(appDataDir, "WhisperWind", "settings.json");
+        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
         var json = JsonSerializer.Serialize(this, new JsonSerializerOptions { WriteIndented = true });
-        File.WriteAllText(SettingsPath(appDataDir), json);
+        File.WriteAllText(path, json);
     }
 }

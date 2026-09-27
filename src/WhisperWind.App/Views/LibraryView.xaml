@@ -1,40 +1,64 @@
 <Page x:Class="WhisperWind.App.Views.LibraryView"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-      xmlns:vm="clr-namespace:WhisperWind.App.ViewModels"
-      xmlns:online="clr-namespace:WhisperWind.App.Online"
       Title="曲库"
-      d:DataContext="{d:DesignInstance vm:MainViewModel}"
-      xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-      mc:Ignorable="d"
       Loaded="OnLoaded">
-    <Grid Margin="24">
+    <Grid Margin="32">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="280" />
+            <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <TextBlock Grid.Row="0" Text="📚 曲库" FontSize="28" Foreground="#E6D9B0" Margin="0,0,0,16" FontWeight="Light" />
+        <TextBlock Grid.Row="0" Text="📚 曲库" FontSize="28" FontWeight="Bold" Foreground="#C9A961" Margin="0,0,0,12" />
 
-        <!-- 本地 -->
-        <Border Grid.Row="1" CornerRadius="16" Background="#22301F" Padding="20">
-            <DockPanel>
-                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,12">
-                    <TextBlock Text="本地曲目" Foreground="#C9A961" FontSize="14" FontWeight="Bold" VerticalAlignment="Center" />
-                    <Button Content="+ 导入本地 MIDI" Command="{Binding ImportLocalMidiCommand}" Background="#C9A961" Foreground="White" Padding="12,4" Margin="16,0,0,0" BorderThickness="0" />
-                </StackPanel>
-                <ListView ItemsSource="{Binding Tracks}" Background="Transparent" Foreground="#E6D9B0" BorderThickness="0">
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,12">
+            <Button Content="📂 导入本地 MIDI" Height="36" Padding="16,0" Margin="0,0,12,0"
+                    Background="#3D5C3A" Foreground="#FFFBF0" BorderThickness="0" Cursor="Hand"
+                    Click="OnImportClick" />
+            <TextBox x:Name="QueryBox" Width="240" Height="36" VerticalContentAlignment="Center"
+                     Padding="8,0" Margin="0,0,8,0" Text="" KeyDown="OnQueryKey" />
+            <Button Content="🔍 搜索在线" Height="36" Padding="12,0" Margin="0,0,8,0"
+                    Background="#A0392F" Foreground="#FFFBF0" BorderThickness="0" Cursor="Hand"
+                    Click="OnSearchClick" />
+            <Button Content="⇆ 翻页" Height="36" Padding="12,0" Margin="0,0,8,0"
+                    Background="#7A7060" Foreground="#FFFBF0" BorderThickness="0" Cursor="Hand"
+                    Click="OnPageClick" />
+            <TextBlock x:Name="StatusText" VerticalAlignment="Center" Foreground="#7A7060" Margin="12,0,0,0" />
+        </StackPanel>
+
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <!-- 本地曲库 -->
+            <DockPanel Grid.Column="0" Margin="0,0,8,0">
+                <TextBlock DockPanel.Dock="Top" Text="本地" FontSize="16" FontWeight="SemiBold" Foreground="#A0392F" Margin="0,0,0,8" />
+                <ListView x:Name="LocalList" Background="Transparent" BorderBrush="#C9A961" SelectionChanged="OnLocalSelect">
                     <ListView.View>
                         <GridView>
-                            <GridViewColumn Header="曲目" Width="380" DisplayMemberBinding="{Binding Name}" />
-                            <GridViewColumn Header="文件" Width="220" DisplayMemberBinding="{Binding FileName}" />
-                            <GridViewColumn Header="操作" Width="120">
+                            <GridViewColumn Header="曲名" Width="220" DisplayMemberBinding="{Binding Name}" />
+                            <GridViewColumn Header="文件" Width="140" DisplayMemberBinding="{Binding FileName}" />
+                        </GridView>
+                    </ListView.View>
+                </ListView>
+            </DockPanel>
+
+            <!-- 在线 -->
+            <DockPanel Grid.Column="1" Margin="8,0,0,0">
+                <TextBlock DockPanel.Dock="Top" Text="在线 (BitMidi.com)" FontSize="16" FontWeight="SemiBold" Foreground="#A0392F" Margin="0,0,0,8" />
+                <ListView x:Name="OnlineList" Background="Transparent" BorderBrush="#C9A961">
+                    <ListView.View>
+                        <GridView>
+                            <GridViewColumn Header="标题" Width="180" DisplayMemberBinding="{Binding Name}" />
+                            <GridViewColumn Header="来源" Width="80" DisplayMemberBinding="{Binding Author}" />
+                            <GridViewColumn Header="下载" Width="80">
                                 <GridViewColumn.CellTemplate>
                                     <DataTemplate>
-                                        <Button Content="载入" Command="{Binding DataContext.LoadTrackCommand, RelativeSource={RelativeSource AncestorType=Page}}" CommandParameter="{Binding}" Background="#C9A961" Foreground="White" BorderThickness="0" Padding="10,4" />
+                                        <Button Content="↓ 下载" Padding="6,2" Background="#3D5C3A" Foreground="#FFFBF0"
+                                                BorderThickness="0" Click="OnDownloadOnlineClick" Tag="{Binding}" />
                                     </DataTemplate>
                                 </GridViewColumn.CellTemplate>
                             </GridViewColumn>
@@ -42,33 +66,6 @@
                     </ListView.View>
                 </ListView>
             </DockPanel>
-        </Border>
-
-        <!-- 在线状态 -->
-        <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,16,0,8">
-            <TextBlock Text="🌐 在线曲库" Foreground="#C9A961" FontSize="14" FontWeight="Bold" VerticalAlignment="Center" />
-            <Button Content="刷新索引" Command="{Binding RefreshOnlineCommand}" Background="#3D4A2E" Foreground="#E6D9B0" Padding="10,4" Margin="12,0,0,0" BorderThickness="0" />
-            <TextBlock Text="{Binding OnlineStatus}" Foreground="#A89870" FontSize="12" VerticalAlignment="Center" Margin="12,0,0,0" />
-        </StackPanel>
-
-        <!-- 在线 -->
-        <Border Grid.Row="3" CornerRadius="16" Background="#1F2818" Padding="20">
-            <ListView ItemsSource="{Binding OnlineTracks}" Background="Transparent" Foreground="#E6D9B0" BorderThickness="0">
-                <ListView.View>
-                    <GridView>
-                        <GridViewColumn Header="曲目" Width="280" DisplayMemberBinding="{Binding Name}" />
-                        <GridViewColumn Header="作者" Width="180" DisplayMemberBinding="{Binding Author}" />
-                        <GridViewColumn Header="BPM" Width="80" DisplayMemberBinding="{Binding Bpm}" />
-                        <GridViewColumn Header="操作" Width="120">
-                            <GridViewColumn.CellTemplate>
-                                <DataTemplate>
-                                    <Button Content="下载" Command="{Binding DataContext.DownloadOnlineCommand, RelativeSource={RelativeSource AncestorType=Page}}" CommandParameter="{Binding}" Background="#3D4A2E" Foreground="#E6D9B0" BorderThickness="0" Padding="10,4" />
-                                </DataTemplate>
-                            </GridViewColumn.CellTemplate>
-                        </GridViewColumn>
-                    </GridView>
-                </ListView.View>
-            </ListView>
-        </Border>
+        </Grid>
     </Grid>
 </Page>

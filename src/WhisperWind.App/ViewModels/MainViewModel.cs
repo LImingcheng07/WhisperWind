@@ -41,6 +41,7 @@ public partial class MainViewModel : ObservableObject
     // 在线曲库
     [ObservableProperty] private string _onlineStatus = "尚未刷新";
     [ObservableProperty] private bool _onlineBusy;
+    [ObservableProperty] private string _onlineQuery = "";
 
     public ObservableCollection<TrackMeta> Tracks { get; } = new();
     public ObservableCollection<OnlineTrackMeta> OnlineTracks { get; } = new();
@@ -149,7 +150,7 @@ public partial class MainViewModel : ObservableObject
         OnlineTracks.Clear();
         try
         {
-            var list = await _online.FetchIndexAsync(_settings.OnlineIndexUrl);
+            var list = await _online.SearchAsync(_onlineQuery);
             foreach (var t in list) OnlineTracks.Add(t);
             OnlineStatus = $"已加载 {list.Count} 首";
         }
@@ -179,6 +180,29 @@ public partial class MainViewModel : ObservableObject
         catch (Exception ex)
         {
             OnlineStatus = $"下载失败: {ex.Message}";
+        }
+        finally
+        {
+            OnlineBusy = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task LoadOnlinePageAsync(int page)
+    {
+        if (OnlineBusy) return;
+        OnlineBusy = true;
+        OnlineStatus = $"拉取第 {page} 页…";
+        OnlineTracks.Clear();
+        try
+        {
+            var list = await _online.GetPageAsync(page);
+            foreach (var t in list) OnlineTracks.Add(t);
+            OnlineStatus = $"第 {page} 页: {list.Count} 首";
+        }
+        catch (Exception ex)
+        {
+            OnlineStatus = $"失败: {ex.Message}";
         }
         finally
         {
@@ -259,7 +283,30 @@ public partial class MainViewModel : ObservableObject
 
     public void ReloadSettings(AppSettings s)
     {
-        _ai.ApiKey = s.AnthropicApiKey ?? "";
+        _ai.CurrentProvider = s.AiProvider switch
+        {
+            "openai" => AiAdvisorService.Provider.OpenAI,
+            "custom" => AiAdvisorService.Provider.Custom,
+            _ => AiAdvisorService.Provider.Anthropic,
+        };
+        _ai.ApiKey = s.AiProvider switch
+        {
+            "openai" => s.OpenaiApiKey ?? "",
+            "custom" => s.CustomApiKey ?? "",
+            _ => s.AnthropicApiKey ?? "",
+        };
         _ai.Model = s.AiModel;
+        _ai.Endpoint = s.AiProvider == "custom" && !string.IsNullOrWhiteSpace(s.CustomEndpoint)
+            ? s.CustomEndpoint
+            : (_ai.CurrentProvider == AiAdvisorService.Provider.OpenAI
+                ? AiAdvisorService.OpenAIEndpoint
+                : AiAdvisorService.AnthropicEndpoint);
+
+        // 在线曲库
+        if (_online != null)
+        {
+            _online.Provider = s.OnlineProvider;
+            _online.CustomIndexUrl = s.CustomIndexUrl;
+        }
     }
 }
