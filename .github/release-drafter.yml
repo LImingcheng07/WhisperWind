@@ -1,0 +1,31 @@
+tag-template: "v$RESOLVED_VERSION"
+version-resolver:
+  major:
+    labels: ["breaking"]
+  minor:
+    labels: ["enhancement", "feature"]
+  patch:
+    labels: ["bug", "dependencies"]
+  default: patch
+categories:
+  - title: "⚠️ 破坏性变更"
+    labels: ["breaking"]
+  - title: "🚀 新功能"
+    labels: ["enhancement", "feature"]
+  - title: "🐛 Bug 修复"
+    labels: ["bug"]
+  - title: "📦 依赖更新"
+    labels: ["dependencies"]
+  - title: "📝 文档"
+    labels: ["documentation"]
+  - title: "🧪 测试"
+    labels: ["test"]
+  - title: "🔧 杂项"
+    labels: ["*"]
+change-template: "- $TITLE (#$NUMBER) @$AUTHOR"
+template: |
+  ## 变更日志
+
+  $CHANGES
+
+  **完整变更**: https://github.com/$OWNER/$REPOSITORY/compare/$PREVIOUS_TAG...v$RESOLVED_VERSION

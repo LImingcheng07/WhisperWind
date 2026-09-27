@@ -1,0 +1,36 @@
+name: Bug report
+about: 报告一个 bug 帮助我们改进
+title: "[Bug] "
+labels: bug
+assignees: ""
+
+---
+
+复现步骤：
+
+1.
+2.
+3.
+
+期望行为：
+
+
+
+实际行为：
+
+
+
+截图 / 日志：
+
+如果适用，请添加截图或日志。
+
+环境：
+
+- OS (例如 Windows 11 23H2)
+- .NET (例如 8.0.425)
+- WhisperWind 版本 (例如 M1 commit xxx)
+- 三角洲行动版本 (例如 S11 赛季)
+
+备注：
+
+任何其他有帮助的信息

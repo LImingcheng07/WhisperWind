@@ -1,0 +1,1329 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>HarmonicWind · 三角洲自动口琴 · UI 概念图 v3 · 终极精修</title>
+<style>
+  :root {
+    /* 战术绿主题：拉开明度 */
+    --bg-0: #050a07;
+    --bg-1: #0a1410;
+    --bg-2: #0f1f17;
+    --bg-3: #142a1f;
+    --bg-4: #1a3528;
+    --bg-elev: #1f3d2e;
+
+    --border: rgba(63, 185, 80, 0.15);
+    --border-mid: rgba(63, 185, 80, 0.32);
+    --border-strong: rgba(63, 185, 80, 0.55);
+
+    --text-0: #ecfaf0;
+    --text-1: #b6c8bc;
+    --text-2: #7a8d80;
+    --text-3: #4a5a52;
+
+    /* 拉开的色彩层级 */
+    --green: #3fb950;
+    --green-bright: #7ee787;  /* 高亮绿 */
+    --green-dim: #2ea043;     /* 暗绿 */
+    --green-glow: #3fb95060;
+
+    --amber: #f0883e;          /* 主提示色，破单色 */
+    --amber-bright: #ffa657;
+    --amber-glow: #f0883e60;
+
+    --blue: #58a6ff;
+    --blue-bright: #79c0ff;
+    --blue-glow: #58a6ff60;
+
+    --cyan: #39c5cf;
+    --red: #f85149;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI Variable', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    background:
+      radial-gradient(ellipse 1500px 800px at 15% 0%, #1a4a3540 0%, transparent 60%),
+      radial-gradient(ellipse 1000px 600px at 90% 100%, #1a5a3d30 0%, transparent 50%),
+      linear-gradient(180deg, #050a07 0%, #0a1410 100%);
+    color: var(--text-0);
+    min-height: 100vh;
+    padding: 24px;
+  }
+
+  /* ============ 标题栏 ============ */
+  .title-bar {
+    max-width: 1560px;
+    margin: 0 auto 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .brand {
+    display: flex; align-items: center; gap: 14px;
+  }
+  .brand-mark {
+    width: 46px; height: 46px;
+    background: linear-gradient(135deg, #3fb950 0%, #2ea043 100%);
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+    clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+    box-shadow: 0 0 24px var(--green-glow);
+  }
+  .brand-mark::after {
+    content: '';
+    position: absolute;
+    inset: 1px;
+    background: linear-gradient(135deg, #0a1410 0%, #142a1f 100%);
+    clip-path: polygon(9px 0, 100% 0, 100% calc(100% - 9px), calc(100% - 9px) 100%, 0 100%, 0 9px);
+  }
+  .brand-mark svg {
+    position: relative; z-index: 1;
+    width: 24px; height: 24px;
+    stroke: var(--green);
+    fill: none;
+    stroke-width: 1.5;
+  }
+  .brand-text { display: flex; flex-direction: column; gap: 3px; }
+  .brand-text .t1 {
+    font-size: 22px; font-weight: 600;
+    letter-spacing: 1.5px;
+    color: var(--text-0);
+  }
+  .brand-text .t2 {
+    font-size: 10px; color: var(--green);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    font-family: 'Segoe UI Mono', monospace;
+    opacity: 0.8;
+  }
+
+  .badges { display: flex; gap: 6px; align-items: center; }
+  .badge {
+    padding: 6px 11px;
+    font-size: 10px;
+    font-weight: 600;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    color: var(--text-1);
+    font-family: 'Segoe UI Mono', monospace;
+    letter-spacing: 0.5px;
+  }
+  .badge.ok {
+    color: var(--green-bright);
+    border-color: var(--border-strong);
+    box-shadow: 0 0 12px var(--green-glow);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .badge.ok::before {
+    content: '';
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--green-bright);
+    box-shadow: 0 0 8px var(--green);
+    animation: pulse 2s ease-in-out infinite;
+  }
+  .badge.amber {
+    color: var(--amber);
+    border-color: rgba(240, 136, 62, 0.5);
+    background: rgba(240, 136, 62, 0.08);
+  }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+  /* ============ 主窗口 ============ */
+  .app {
+    max-width: 1560px;
+    margin: 0 auto;
+    background: linear-gradient(180deg, var(--bg-2) 0%, var(--bg-1) 100%);
+    border: 1px solid var(--border);
+    position: relative;
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    min-height: 900px;
+    clip-path: polygon(
+      22px 0,
+      100% 0,
+      100% calc(100% - 22px),
+      calc(100% - 22px) 100%,
+      0 100%,
+      0 22px
+    );
+    box-shadow:
+      0 20px 60px rgba(0,0,0,0.6),
+      0 0 0 1px rgba(63, 185, 80, 0.08),
+      0 0 80px rgba(63, 185, 80, 0.05);
+  }
+  /* 扫描线纹理 */
+  .app::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      repeating-linear-gradient(0deg, transparent 0px, transparent 3px, rgba(63,185,80,0.018) 3px, rgba(63,185,80,0.018) 4px);
+    pointer-events: none;
+    z-index: 1;
+  }
+  .app::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 1200px 400px at 50% 0%, rgba(63, 185, 80, 0.05) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  /* ============ 侧栏 ============ */
+  .sidebar {
+    background: linear-gradient(180deg, var(--bg-1) 0%, var(--bg-0) 100%);
+    border-right: 1px solid var(--border);
+    padding: 22px 12px;
+    display: flex; flex-direction: column; gap: 2px;
+    position: relative;
+  }
+  .sidebar::after {
+    content: '';
+    position: absolute;
+    right: 0; top: 20%; bottom: 20%; width: 1px;
+    background: linear-gradient(180deg, transparent 0%, var(--green) 30%, var(--green) 70%, transparent 100%);
+    opacity: 0.4;
+  }
+  .nav-section {
+    font-size: 9px;
+    color: var(--text-3);
+    text-transform: uppercase;
+    letter-spacing: 2.5px;
+    padding: 14px 14px 6px;
+    font-family: 'Segoe UI Mono', monospace;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .nav-section::before {
+    content: '';
+    width: 10px; height: 1px;
+    background: var(--text-3);
+  }
+  .nav-section::after {
+    content: '';
+    flex: 1; height: 1px;
+    background: var(--border);
+  }
+  .nav-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 12px;
+    font-size: 13px;
+    color: var(--text-1);
+    cursor: pointer;
+    transition: all 140ms ease-out;
+    position: relative;
+    border-left: 2px solid transparent;
+  }
+  .nav-item:hover { color: var(--text-0); background: rgba(63, 185, 80, 0.05); }
+  .nav-item.active {
+    color: var(--green-bright);
+    background: linear-gradient(90deg, rgba(63, 185, 80, 0.18) 0%, transparent 100%);
+    border-left-color: var(--green-bright);
+    text-shadow: 0 0 8px var(--green-glow);
+  }
+  .nav-item .ico {
+    width: 18px; height: 18px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 1.5;
+    flex-shrink: 0;
+  }
+  .nav-item .kbd {
+    margin-left: auto;
+    font-family: 'Segoe UI Mono', monospace;
+    font-size: 9px;
+    padding: 2px 5px;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    color: var(--text-2);
+  }
+  .nav-item.active .kbd {
+    border-color: var(--border-strong);
+    color: var(--green-bright);
+  }
+
+  .sidebar-footer {
+    margin-top: auto;
+    padding: 14px;
+    border-top: 1px solid var(--border);
+  }
+  .tac-display {
+    background: var(--bg-0);
+    border: 1px solid var(--border);
+    padding: 10px 12px;
+    font-family: 'Segoe UI Mono', monospace;
+    font-size: 10px;
+    color: var(--green);
+    letter-spacing: 1px;
+    margin-top: 10px;
+    position: relative;
+  }
+  .tac-display::before {
+    content: 'TAC-LINK';
+    position: absolute;
+    top: -6px; left: 8px;
+    background: var(--bg-1);
+    padding: 0 4px;
+    color: var(--green);
+    font-size: 9px;
+    letter-spacing: 2px;
+  }
+  .tac-display::after {
+    content: '';
+    position: absolute;
+    top: -1px; right: 8px;
+    width: 6px; height: 6px;
+    background: var(--green-bright);
+    border-radius: 50%;
+    box-shadow: 0 0 6px var(--green);
+    animation: pulse 2s ease-in-out infinite;
+  }
+  .tac-display .row { display: flex; justify-content: space-between; padding: 2px 0; }
+  .tac-display .row span:first-child { color: var(--text-3); }
+  .tac-display .row span:last-child { color: var(--text-1); }
+
+  /* ============ 主区 ============ */
+  .main {
+    display: grid;
+    grid-template-rows: auto 1fr;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* 顶部状态条 */
+  .topbar {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 22px;
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(180deg, rgba(10,20,16,0.7) 0%, rgba(10,20,16,0) 100%);
+    position: relative;
+  }
+  .status-pill {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 10px;
+    background: var(--bg-1);
+    border: 1px solid var(--border);
+    font-size: 11px;
+    color: var(--text-1);
+    font-family: 'Segoe UI Mono', monospace;
+  }
+  .status-pill .lbl { color: var(--text-3); }
+  .status-pill .val { color: var(--text-0); font-weight: 500; }
+  .status-pill.ok { border-color: var(--border-strong); }
+  .status-pill.ok .val { color: var(--green-bright); }
+  .status-pill.amber { border-color: rgba(240, 136, 62, 0.5); }
+  .status-pill.amber .val { color: var(--amber); }
+  .status-pill .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--green-bright);
+    box-shadow: 0 0 6px var(--green);
+    animation: pulse 2s ease-in-out infinite;
+  }
+  .topbar .spacer { flex: 1; }
+  .icon-btn {
+    width: 30px; height: 30px;
+    background: var(--bg-1);
+    border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    color: var(--text-1);
+  }
+  .icon-btn:hover { color: var(--green-bright); border-color: var(--border-strong); }
+  .icon-btn svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 1.5; }
+
+  /* ============ 内容区 ============ */
+  .content {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    grid-template-rows: 1fr;
+    gap: 16px;
+    padding: 20px;
+    overflow: hidden;
+  }
+
+  /* 左大区 */
+  .stage {
+    display: grid;
+    grid-template-rows: 1fr 90px 84px;
+    gap: 14px;
+    min-height: 0;
+  }
+
+  /* ===== 3D 口琴舞台（线框全息风） ===== */
+  .harmonica-stage {
+    background:
+      radial-gradient(ellipse 900px 500px at 50% 50%, rgba(63, 185, 80, 0.12) 0%, transparent 60%),
+      linear-gradient(180deg, var(--bg-1) 0%, var(--bg-0) 100%);
+    border: 1px solid var(--border);
+    padding: 18px 22px;
+    position: relative;
+    overflow: hidden;
+    min-height: 0;
+  }
+  .stage-grid-bg {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(63, 185, 80, 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(63, 185, 80, 0.05) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    mask: radial-gradient(ellipse 800px 500px at center, #000 30%, transparent 80%);
+    -webkit-mask: radial-gradient(ellipse 800px 500px at center, #000 30%, transparent 80%);
+  }
+  .stage-grid-bg::after {
+    content: '';
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(63, 185, 80, 0.15) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(63, 185, 80, 0.15) 1px, transparent 1px);
+    background-size: 200px 200px;
+    pointer-events: none;
+  }
+  .stage-corner {
+    position: absolute;
+    width: 26px; height: 26px;
+    border: 1.5px solid var(--green);
+    opacity: 0.7;
+  }
+  .stage-corner.tl { top: 8px; left: 8px; border-right: none; border-bottom: none; }
+  .stage-corner.tr { top: 8px; right: 8px; border-left: none; border-bottom: none; }
+  .stage-corner.bl { bottom: 8px; left: 8px; border-right: none; border-top: none; }
+  .stage-corner.br { bottom: 8px; right: 8px; border-left: none; border-top: none; }
+
+  /* HUD 角落数据 */
+  .hud-overlay {
+    position: absolute;
+    font-family: 'Segoe UI Mono', monospace;
+    font-size: 9px;
+    color: var(--green);
+    opacity: 0.65;
+    letter-spacing: 1px;
+    pointer-events: none;
+    z-index: 3;
+  }
+  .hud-overlay .lbl { color: var(--text-3); }
+  .hud-overlay.tl { top: 14px; left: 18px; }
+  .hud-overlay.tr { top: 14px; right: 18px; text-align: right; }
+  .hud-overlay.bl { bottom: 14px; left: 18px; }
+  .hud-overlay.br { bottom: 14px; right: 18px; text-align: right; }
+
+  .stage-header {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    position: relative;
+    z-index: 4;
+  }
+  .stage-title { display: flex; flex-direction: column; gap: 4px; }
+  .stage-title .row1 { display: flex; align-items: center; gap: 10px; }
+  .stage-title .id {
+    font-family: 'Segoe UI Mono', monospace;
+    font-size: 10px;
+    color: var(--green-bright);
+    background: var(--bg-1);
+    padding: 3px 7px;
+    border: 1px solid var(--border-strong);
+    letter-spacing: 1.5px;
+    box-shadow: 0 0 8px var(--green-glow);
+  }
+  .stage-title h2 {
+    font-size: 24px; font-weight: 600;
+    color: var(--text-0);
+    letter-spacing: 0.5px;
+  }
+  .stage-title .meta {
+    font-size: 11px;
+    color: var(--text-2);
+    font-family: 'Segoe UI Mono', monospace;
+    letter-spacing: 0.5px;
+  }
+  .stage-title .meta b { color: var(--green-bright); font-weight: 500; }
+  .stage-title .meta .warn { color: var(--amber); }
+  .stage-title .meta .ok { color: var(--green-bright); }
+
+  .stage-actions { display: flex; gap: 6px; }
+  .btn {
+    padding: 9px 16px;
+    background: var(--bg-1);
+    border: 1px solid var(--border);
+    color: var(--text-1);
+    font-size: 12px;
+    cursor: pointer;
+    display: flex; align-items: center; gap: 6px;
+    transition: all 140ms ease-out;
+    font-family: inherit;
+  }
+  .btn:hover { color: var(--text-0); border-color: var(--border-mid); }
+  .btn .ico-s { width: 12px; height: 12px; stroke: currentColor; fill: currentColor; }
+  .btn.primary {
+    background: linear-gradient(180deg, var(--green) 0%, var(--green-dim) 100%);
+    border-color: var(--green);
+    color: #051a0a;
+    font-weight: 700;
+    box-shadow: 0 0 20px var(--green-glow), inset 0 1px 0 rgba(255,255,255,0.3);
+    letter-spacing: 1px;
+  }
+  .btn.primary:hover { box-shadow: 0 0 32px var(--green), inset 0 1px 0 rgba(255,255,255,0.4); }
+  .btn .kbd {
+    font-family: 'Segoe UI Mono', monospace;
+    font-size: 9px;
+    padding: 1px 4px;
+    background: rgba(0,0,0,0.3);
+    color: inherit;
+  }
+
+  /* 3D 口琴主体（线框全息风格） */
+  .harmonica-3d {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    min-height: 200px;
+    z-index: 2;
+  }
+  .h-ring {
+    position: absolute;
+    border: 1px solid var(--green);
+    border-radius: 50%;
+    opacity: 0.15;
+  }
+  .h-ring.r1 { width: 600px; height: 600px; }
+  .h-ring.r2 { width: 480px; height: 480px; border-color: var(--green-bright); }
+  .h-ring.r3 { width: 360px; height: 360px; }
+
+  .harmonica {
+    width: 560px;
+    height: 140px;
+    background:
+      linear-gradient(180deg,
+        rgba(20, 42, 31, 0.95) 0%,
+        rgba(10, 20, 16, 0.95) 50%,
+        rgba(20, 42, 31, 0.95) 100%);
+    border: 1.5px solid var(--green);
+    border-top-color: var(--green-bright);
+    border-bottom-color: var(--green-dim);
+    box-shadow:
+      0 0 60px var(--green-glow),
+      0 24px 60px rgba(0, 0, 0, 0.7),
+      inset 0 0 30px rgba(63, 185, 80, 0.1);
+    position: relative;
+    transform: perspective(1000px) rotateX(15deg);
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    padding: 0 28px;
+    z-index: 2;
+  }
+  /* 顶部/底部 HUD 线条 */
+  .harmonica::before {
+    content: '';
+    position: absolute;
+    top: 8px; left: 20px; right: 20px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--green), transparent);
+    opacity: 0.5;
+  }
+  .harmonica::after {
+    content: '';
+    position: absolute;
+    bottom: 8px; left: 20px; right: 20px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--green), transparent);
+    opacity: 0.5;
+  }
+  .h-label {
+    position: absolute;
+    top: 12px; left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Segoe UI Mono', monospace;
+    font-size: 8px;
+    color: var(--green);
+    letter-spacing: 4px;
+    opacity: 0.7;
+  }
+  .h-serial {
+    position: absolute;
+    bottom: 12px; left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Segoe UI Mono', monospace;
+    font-size: 8px;
+    color: var(--text-3);
+    letter-spacing: 2px;
+  }
+
+  .hole {
+    width: 42px; height: 86px;
+    background: radial-gradient(ellipse at center 30%, rgba(0,0,0,0.95) 0%, rgba(5, 10, 7, 0.9) 60%, transparent 100%);
+    border: 1px solid var(--border-mid);
+    border-top: 1.5px solid var(--green-dim);
+    position: relative;
+    transition: all 100ms ease-out;
+  }
+  .hole::before {
+    content: '';
+    position: absolute;
+    top: 6px; left: 50%;
+    transform: translateX(-50%);
+    width: 1px; height: 8px;
+    background: var(--green);
+    opacity: 0.4;
+  }
+  .hole::after {
+    content: '';
+    position: absolute;
+    inset: 6px 4px 12px;
+    background: linear-gradient(180deg, transparent 0%, rgba(63, 185, 80, 0.1) 50%, transparent 100%);
+    opacity: 0.4;
+  }
+  .hole.active {
+    background: radial-gradient(ellipse at center 30%, #7ee787 0%, #3fb950 50%, #1a4a25 100%);
+    box-shadow:
+      0 0 32px var(--green),
+      0 0 64px var(--green-glow),
+      inset 0 0 16px rgba(255, 255, 255, 0.4);
+    border-color: var(--green-bright);
+  }
+  .hole.active::after {
+    content: '';
+    position: absolute;
+    bottom: -60px; left: 50%;
+    transform: translateX(-50%);
+    width: 3px; height: 60px;
+    background: linear-gradient(180deg, var(--green-bright), transparent);
+    box-shadow: 0 0 12px var(--green);
+    animation: airflow 0.5s ease-out infinite;
+  }
+  @keyframes airflow {
+    0% { opacity: 1; height: 40px; }
+    100% { opacity: 0; height: 70px; }
+  }
+  .hole-num {
+    position: absolute;
+    top: 8px; left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Segoe UI Mono', monospace;
+    font-size: 7px;
+    color: var(--text-3);
+    letter-spacing: 0.5px;
+  }
+  .hole.active .hole-num { color: var(--bg-0); font-weight: 700; }
+
+  /* ===== 钢琴卷帘窗 ===== */
+  .pianoroll-card {
+    background: var(--bg-1);
+    border: 1px solid var(--border);
+    padding: 12px 14px;
+    position: relative;
+  }
+  .pr-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 8px;
+  }
+  .pr-title {
+    font-size: 10px;
+    color: var(--green);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    font-family: 'Segoe UI Mono', monospace;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .pr-title::before {
+    content: '';
+    width: 4px; height: 12px;
+    background: var(--green);
+    box-shadow: 0 0 4px var(--green);
+  }
+  .pr-legend { display: flex; gap: 12px; font-size: 9px; color: var(--text-2); font-family: 'Segoe UI Mono', monospace; }
+  .pr-legend span { display: flex; align-items: center; gap: 4px; }
+  .pr-legend i {
+    width: 10px; height: 4px;
+    background: var(--green);
+    display: inline-block;
+  }
+  .pr-legend i.amber { background: var(--amber); }
+  .pr-legend i.blue { background: var(--blue); }
+  .pr-legend i.cyan { background: var(--cyan); }
+
+  .pianoroll {
+    height: 58px;
+    background: var(--bg-0);
+    border: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+  .pr-grid {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(90deg, transparent 0%, transparent calc(100% / 16 - 1px), var(--border) calc(100% / 16 - 1px), var(--border) calc(100% / 16)),
+      linear-gradient(0deg, transparent 0%, transparent calc(100% / 4 - 1px), var(--border) calc(100% / 4 - 1px), var(--border) calc(100% / 4));
+    background-size: calc(100% / 16) calc(100% / 4);
+  }
+  .pr-note {
+    position: absolute;
+    height: calc(100% / 4 - 2px);
+    background: linear-gradient(90deg, var(--green), var(--green-dim));
+    box-shadow: 0 0 6px var(--green-glow);
+    border-left: 2px solid #fff;
+    opacity: 0.9;
+  }
+  .pr-note.amber { background: linear-gradient(90deg, var(--amber), #c0651a); box-shadow: 0 0 6px var(--amber-glow); }
+  .pr-note.blue { background: linear-gradient(90deg, var(--blue), #3d7fcc); box-shadow: 0 0 6px var(--blue-glow); }
+  .pr-note.cyan { background: linear-gradient(90deg, var(--cyan), #2a8a92); box-shadow: 0 0 6px #39c5cf60; }
+  .pr-cursor {
+    position: absolute;
+    top: 0; bottom: 0;
+    width: 1.5px;
+    background: var(--green-bright);
+    box-shadow: 0 0 8px var(--green), 0 0 16px var(--green-glow);
+    left: 68%;
+    z-index: 5;
+  }
+  .pr-cursor::after {
+    content: '▼';
+    position: absolute;
+    top: -2px; left: -5px;
+    color: var(--green-bright);
+    font-size: 10px;
+    text-shadow: 0 0 4px var(--green);
+  }
+  .pr-axis {
+    display: flex; justify-content: space-between;
+    margin-top: 4px;
+    font-family: 'Segoe UI Mono', monospace;
+    font-size: 8px;
+    color: var(--text-3);
+  }
+
+  /* ===== 播放信息条 ===== */
+  .now-playing {
+    background: var(--bg-1);
+    border: 1px solid var(--border);
+    padding: 12px 16px;
+    display: grid;
+    grid-template-columns: 56px 1fr auto;
+    gap: 14px;
+    align-items: center;
+    position: relative;
+  }
+  .np-cover {
+    width: 56px; height: 56px;
+    background: linear-gradient(135deg, #1a4a35 0%, #0f2e22 100%);
+    border: 1px solid var(--border-strong);
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 0 12px var(--green-glow);
+  }
+  .np-cover::before {
+    content: '';
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(circle at 30% 30%, rgba(126, 231, 135, 0.5), transparent 50%),
+      radial-gradient(circle at 70% 70%, rgba(88, 166, 255, 0.3), transparent 50%);
+  }
+  .np-cover svg { position: relative; z-index: 1; width: 28px; height: 28px; stroke: var(--green-bright); fill: none; stroke-width: 1.5; filter: drop-shadow(0 0 4px var(--green)); }
+  .np-info { display: flex; flex-direction: column; gap: 4px; }
+  .np-info .title {
+    font-size: 14px; font-weight: 600; color: var(--text-0);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .np-info .title .ver {
+    font-size: 9px; color: var(--green-bright);
+    background: var(--bg-2);
+    padding: 2px 6px;
+    border: 1px solid var(--border-strong);
+    font-family: 'Segoe UI Mono', monospace;
+    letter-spacing: 0.5px;
+  }
+  .np-info .meta {
+    font-size: 10px;
+    color: var(--text-2);
+    font-family: 'Segoe UI Mono', monospace;
+    display: flex; gap: 12px;
+  }
+  .np-info .meta span b { color: var(--text-1); font-weight: 500; }
+  .np-info .meta .accent { color: var(--amber); }
+  .np-progress-row {
+    grid-column: 1 / -1;
+    display: flex; align-items: center; gap: 10px;
+    margin-top: 4px;
+  }
+  .np-progress {
+    flex: 1;
+    height: 3px;
+    background: var(--bg-2);
+    position: relative;
+  }
+  .np-progress-bar {
+    position: absolute; top: 0; left: 0; bottom: 0;
+    width: 68%;
+    background: linear-gradient(90deg, var(--green) 0%, var(--amber) 70%, var(--blue) 100%);
+    box-shadow: 0 0 6px var(--green-glow);
+  }
+  .np-time {
+    font-family: 'Segoe UI Mono', monospace;
+    font-size: 10px;
+    color: var(--text-2);
+    min-width: 90px;
+    text-align: right;
+  }
+  .np-time .cur { color: var(--green-bright); font-weight: 600; text-shadow: 0 0 4px var(--green); }
+
+  /* ============ 右侧栏 ============ */
+  .right-col {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-height: 0;
+  }
+  .card {
+    background: var(--bg-1);
+    border: 1px solid var(--border);
+    padding: 14px 16px;
+    position: relative;
+  }
+  .card-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .card-title {
+    font-size: 10px;
+    color: var(--green);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    font-family: 'Segoe UI Mono', monospace;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .card-title::before {
+    content: '';
+    width: 3px; height: 12px;
+    background: var(--green);
+    box-shadow: 0 0 4px var(--green);
+  }
+  .card-tag {
+    font-size: 8px;
+    padding: 2px 5px;
+    background: linear-gradient(90deg, rgba(88, 166, 255, 0.15), rgba(163, 113, 247, 0.15));
+    border: 1px solid rgba(88, 166, 255, 0.3);
+    color: var(--blue-bright);
+    letter-spacing: 1px;
+    font-family: 'Segoe UI Mono', monospace;
+  }
+  .card-tag.amber {
+    background: rgba(240, 136, 62, 0.12);
+    border-color: rgba(240, 136, 62, 0.4);
+    color: var(--amber);
+  }
+
+  /* AI 智能分析 */
+  .ai-suggest .row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 6px 0;
+    font-size: 11px;
+    border-bottom: 1px dashed rgba(63, 185, 80, 0.08);
+  }
+  .ai-suggest .row:last-of-type { border-bottom: none; }
+  .ai-suggest .row .k { color: var(--text-3); font-family: 'Segoe UI Mono', monospace; font-size: 10px; }
+  .ai-suggest .row .v { color: var(--text-0); font-weight: 500; font-family: 'Segoe UI Mono', monospace; font-size: 11px; }
+  .ai-suggest .row .v.green { color: var(--green-bright); }
+  .ai-suggest .row .v.blue { color: var(--blue-bright); }
+  .ai-suggest .row .v.amber { color: var(--amber); }
+  .ai-suggest .why {
+    margin-top: 10px;
+    padding: 10px 12px;
+    background: var(--bg-0);
+    border-left: 2px solid var(--blue-bright);
+    font-size: 10px;
+    color: var(--text-1);
+    line-height: 1.6;
+  }
+  .ai-suggest .why b { color: var(--blue-bright); font-weight: 600; }
+  .ai-suggest .why strong.green { color: var(--green-bright); }
+
+  /* 曲库 */
+  .lib-list { display: flex; flex-direction: column; gap: 6px; }
+  .lib-item {
+    display: grid;
+    grid-template-columns: 36px 1fr auto;
+    gap: 10px;
+    align-items: center;
+    padding: 8px 10px;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    transition: all 140ms ease-out;
+  }
+  .lib-item:hover { border-color: var(--border-mid); }
+  .lib-item.playing {
+    border-color: var(--border-strong);
+    background: linear-gradient(90deg, rgba(63,185,80,0.12) 0%, transparent 100%);
+    box-shadow: 0 0 12px var(--green-glow), inset 0 0 12px rgba(63, 185, 80, 0.05);
+  }
+  .lib-cover {
+    width: 36px; height: 36px;
+    background: var(--bg-1);
+    border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .lib-cover svg { width: 18px; height: 18px; stroke: var(--text-1); fill: none; stroke-width: 1.5; }
+  .lib-item.playing .lib-cover { border-color: var(--border-strong); background: rgba(63,185,80,0.1); }
+  .lib-item.playing .lib-cover svg { stroke: var(--green-bright); }
+  .lib-info { min-width: 0; }
+  .lib-info .t { font-size: 12px; font-weight: 500; color: var(--text-0); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .lib-info .m { font-size: 9px; color: var(--text-2); font-family: 'Segoe UI Mono', monospace; margin-top: 2px; }
+  .lib-rating {
+    font-size: 10px;
+    color: var(--amber);
+    font-family: 'Segoe UI Mono', monospace;
+  }
+
+  /* 统计 */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+  .stat {
+    text-align: center;
+    padding: 10px 4px;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    position: relative;
+  }
+  .stat::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--green), transparent);
+    opacity: 0.5;
+  }
+  .stat .v {
+    font-size: 20px; font-weight: 700;
+    background: linear-gradient(180deg, var(--green-bright) 0%, var(--green-dim) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    font-family: 'Segoe UI Mono', monospace;
+    text-shadow: 0 0 12px var(--green-glow);
+  }
+  .stat .k { font-size: 8px; color: var(--text-2); margin-top: 2px; text-transform: uppercase; letter-spacing: 1px; }
+
+  /* NPC 任务码 */
+  .npc-list { display: flex; flex-direction: column; gap: 6px; }
+  .npc-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 8px;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    font-size: 11px;
+  }
+  .npc-item .name { color: var(--text-1); min-width: 50px; }
+  .npc-item .code {
+    font-family: 'Segoe UI Mono', monospace;
+    color: var(--green-bright);
+    font-weight: 600;
+    letter-spacing: 1px;
+    flex: 1;
+  }
+  .npc-item .status {
+    font-size: 8px;
+    padding: 2px 5px;
+    background: var(--bg-1);
+    color: var(--text-3);
+    font-family: 'Segoe UI Mono', monospace;
+  }
+  .npc-item.done .status { color: var(--green-bright); border: 1px solid var(--border-strong); }
+  .npc-item .status { color: var(--amber); border: 1px solid rgba(240, 136, 62, 0.3); }
+
+  .footer {
+    max-width: 1560px;
+    margin: 16px auto 0;
+    display: flex; justify-content: space-between;
+    font-family: 'Segoe UI Mono', monospace;
+    font-size: 9px;
+    color: var(--text-3);
+    letter-spacing: 1px;
+  }
+  .footer .hl { color: var(--green-bright); }
+  .footer .sep { color: var(--text-3); margin: 0 8px; }
+</style>
+</head>
+<body>
+
+<div class="title-bar">
+  <div class="brand">
+    <div class="brand-mark">
+      <svg viewBox="0 0 24 24">
+        <path d="M3 12h2 M7 8v8 M11 6v12 M15 4v16 M19 8v8 M21 12h2"/>
+        <circle cx="12" cy="12" r="9" opacity="0.3"/>
+      </svg>
+    </div>
+    <div class="brand-text">
+      <div class="t1">HARMONICWIND</div>
+      <div class="t2">// DELTA FORCE · AUTO HARMONICA · v0.3</div>
+    </div>
+  </div>
+  <div class="badges">
+    <span class="badge">WPF · .NET 8</span>
+    <span class="badge">SENDINPUT ONLY</span>
+    <span class="badge amber">⚠ MAY VIOLATE ToS</span>
+    <span class="badge ok">TAC-LINK ACTIVE</span>
+  </div>
+</div>
+
+<div class="app">
+
+  <!-- 侧栏 -->
+  <div class="sidebar">
+    <div class="nav-section">CONTROL</div>
+    <div class="nav-item active">
+      <svg class="ico" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      现在播放
+      <span class="kbd">F8</span>
+    </div>
+    <div class="nav-item">
+      <svg class="ico" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20 M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+      曲库
+    </div>
+    <div class="nav-item">
+      <svg class="ico" viewBox="0 0 24 24"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z M19 10v2a7 7 0 0 1-14 0v-2 M12 19v4 M8 23h8"/></svg>
+      语音控制
+    </div>
+    <div class="nav-item">
+      <svg class="ico" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="16" r="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      NPC 任务码
+    </div>
+
+    <div class="nav-section">PERFORMANCE</div>
+    <div class="nav-item">
+      <svg class="ico" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+      速度 <span class="kbd">1.0×</span>
+    </div>
+    <div class="nav-item">
+      <svg class="ico" viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+      移调 <span class="kbd">+2</span>
+    </div>
+    <div class="nav-item">
+      <svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      倒计时 <span class="kbd">3s</span>
+    </div>
+
+    <div class="nav-section">INTEL</div>
+    <div class="nav-item">
+      <svg class="ico" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      AI 助手
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="tac-display">
+        <div class="row"><span>SESSION</span><span>03:42:18</span></div>
+        <div class="row"><span>FPS</span><span>120</span></div>
+        <div class="row"><span>CPU</span><span>2.1%</span></div>
+        <div class="row"><span>MEM</span><span>84MB</span></div>
+        <div class="row"><span>CHANNEL</span><span>SECURE</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 主区 -->
+  <div class="main">
+    <!-- 顶部状态 -->
+    <div class="topbar">
+      <div class="status-pill ok">
+        <span class="dot"></span>
+        <span class="lbl">WIN:</span> <span class="val">DELTA FORCE</span>
+      </div>
+      <div class="status-pill">
+        <span class="lbl">RES:</span> <span class="val">2560×1440</span>
+      </div>
+      <div class="status-pill ok">
+        <span class="lbl">OUT:</span> <span class="val">ENABLED</span>
+      </div>
+      <div class="status-pill amber">
+        <span class="lbl">RISK:</span> <span class="val">MEDIUM</span>
+      </div>
+      <div class="status-pill">
+        <span class="lbl">PROFILE:</span> <span class="val">TACTICAL-GREEN</span>
+      </div>
+      <div class="spacer"></div>
+      <div class="icon-btn"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>
+      <div class="icon-btn"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3 M12 17h.01"/></svg></div>
+      <div class="icon-btn"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></div>
+    </div>
+
+    <!-- 内容 -->
+    <div class="content">
+
+      <!-- 左：舞台 -->
+      <div class="stage">
+        <!-- 3D 口琴 -->
+        <div class="harmonica-stage">
+          <div class="stage-grid-bg"></div>
+          <div class="stage-corner tl"></div>
+          <div class="stage-corner tr"></div>
+          <div class="stage-corner bl"></div>
+          <div class="stage-corner br"></div>
+
+          <div class="hud-overlay tl">
+            <div><span class="lbl">SCAN</span> / HARMONICA.MDL</div>
+            <div><span class="lbl">VIEW</span> / 015°</div>
+            <div><span class="lbl">SCAN</span> / 89%</div>
+          </div>
+          <div class="hud-overlay tr">
+            <div><span class="lbl">HOLE</span> / 02 04 08</div>
+            <div><span class="lbl">OCT</span> / +0</div>
+            <div><span class="lbl">VEL</span> / 0.84</div>
+          </div>
+          <div class="hud-overlay bl">
+            <div><span class="lbl">AIRFLOW</span> / NORMAL</div>
+            <div><span class="lbl">FORCE</span> / 2.4 kPa</div>
+          </div>
+          <div class="hud-overlay br">
+            <div><span class="lbl">TEMPERATURE</span> / 24°C</div>
+            <div><span class="lbl">LATENCY</span> / 8ms</div>
+          </div>
+
+          <div class="stage-header">
+            <div class="stage-title">
+              <div class="row1">
+                <span class="id">#TRACK-0024</span>
+                <h2>父亲 · 筷子兄弟</h2>
+              </div>
+              <div class="meta">
+                <b class="ok">120 BPM</b> · <b>4:13</b> · <b>454 音符</b> · <span class="warn">⚠ 3 OCT-SHIFT</span> · <span class="ok">✓ 0 CONFLICT</span>
+              </div>
+            </div>
+            <div class="stage-actions">
+              <div class="btn">
+                <svg class="ico-s" viewBox="0 0 24 24"><polygon points="19 20 9 12 19 4 19 20"/><line x1="5" y1="19" x2="5" y2="5"/></svg>
+                PREV
+              </div>
+              <div class="btn primary">
+                <svg class="ico-s" viewBox="0 0 24 24" style="fill:#051a0a;stroke:#051a0a;"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                PLAY
+                <span class="kbd">F8</span>
+              </div>
+              <div class="btn">
+                <svg class="ico-s" viewBox="0 0 24 24"><line x1="5" y1="4" x2="5" y2="20"/><line x1="19" y1="4" x2="19" y2="20"/></svg>
+                STOP
+                <span class="kbd">F9</span>
+              </div>
+              <div class="btn">
+                <svg class="ico-s" viewBox="0 0 24 24"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/></svg>
+                NEXT
+              </div>
+            </div>
+          </div>
+
+          <div class="harmonica-3d">
+            <div class="h-ring r1"></div>
+            <div class="h-ring r2"></div>
+            <div class="h-ring r3"></div>
+            <div class="harmonica">
+              <span class="h-label">HARMONIC WIND</span>
+              <span class="h-serial">SN-260926-DELTA-0024</span>
+              <div class="hole"><span class="hole-num">01</span></div>
+              <div class="hole active"><span class="hole-num">02</span></div>
+              <div class="hole"><span class="hole-num">03</span></div>
+              <div class="hole active"><span class="hole-num">04</span></div>
+              <div class="hole"><span class="hole-num">05</span></div>
+              <div class="hole"><span class="hole-num">06</span></div>
+              <div class="hole"><span class="hole-num">07</span></div>
+              <div class="hole active"><span class="hole-num">08</span></div>
+              <div class="hole"><span class="hole-num">09</span></div>
+              <div class="hole"><span class="hole-num">10</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 钢琴卷帘窗 -->
+        <div class="pianoroll-card">
+          <div class="pr-header">
+            <div class="pr-title">PIANO ROLL · 实时卷帘窗</div>
+            <div class="pr-legend">
+              <span><i></i> 白键</span>
+              <span><i class="amber"></i> 升半音</span>
+              <span><i class="blue"></i> 高八度</span>
+              <span><i class="cyan"></i> 低八度</span>
+            </div>
+          </div>
+          <div class="pianoroll">
+            <div class="pr-grid"></div>
+            <div class="pr-note" style="left:2%; top:0; width:5%;"></div>
+            <div class="pr-note" style="left:9%; top:25%; width:3%;"></div>
+            <div class="pr-note amber" style="left:14%; top:50%; width:3%;"></div>
+            <div class="pr-note cyan" style="left:19%; top:100%; width:4%;"></div>
+            <div class="pr-note" style="left:25%; top:50%; width:3%;"></div>
+            <div class="pr-note" style="left:30%; top:25%; width:5%;"></div>
+            <div class="pr-note blue" style="left:37%; top:0; width:4%;"></div>
+            <div class="pr-note" style="left:43%; top:25%; width:3%;"></div>
+            <div class="pr-note amber" style="left:49%; top:50%; width:4%;"></div>
+            <div class="pr-note" style="left:55%; top:75%; width:3%;"></div>
+            <div class="pr-note cyan" style="left:60%; top:100%; width:4%;"></div>
+            <div class="pr-note" style="left:66%; top:75%; width:3%;"></div>
+            <div class="pr-note" style="left:72%; top:50%; width:3%;"></div>
+            <div class="pr-note" style="left:78%; top:25%; width:4%;"></div>
+            <div class="pr-note blue" style="left:84%; top:0; width:3%;"></div>
+            <div class="pr-note" style="left:90%; top:25%; width:4%;"></div>
+            <div class="pr-note" style="left:96%; top:50%; width:3%;"></div>
+            <div class="pr-cursor"></div>
+          </div>
+          <div class="pr-axis">
+            <span>00:00</span><span>00:32</span><span>01:04</span><span>01:36</span><span>02:08</span><span>02:40</span><span>03:12</span><span>03:44</span><span>04:13</span>
+          </div>
+        </div>
+
+        <!-- 播放信息 -->
+        <div class="now-playing">
+          <div class="np-cover">
+            <svg viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+          </div>
+          <div class="np-info">
+            <div class="title">
+              父亲
+              <span class="ver">DELTA ADAPT</span>
+            </div>
+            <div class="meta">
+              <span><b>筷子兄弟</b></span>
+              <span><b>120</b> BPM</span>
+              <span><b class="accent">+2</b> TRANSPOSE</span>
+              <span><b>0.85×</b> SPEED</span>
+              <span><b>96/100</b> SCORE</span>
+            </div>
+          </div>
+          <div class="np-time">
+            <span class="cur">02:51</span> / 04:13
+          </div>
+          <div class="np-progress-row">
+            <div class="np-progress"><div class="np-progress-bar"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 右侧栏 -->
+      <div class="right-col">
+
+        <!-- AI 智能分析 -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">AI INTEL</div>
+            <span class="card-tag">CLAUDE</span>
+          </div>
+          <div class="ai-suggest">
+            <div class="row"><span class="k">TRACK</span><span class="v blue">#1 MELODY</span></div>
+            <div class="row"><span class="k">TRANSPOSE</span><span class="v green">+2 SEMI</span></div>
+            <div class="row"><span class="k">SPEED</span><span class="v">0.85×</span></div>
+            <div class="row"><span class="k">SCORE</span><span class="v green">96/100</span></div>
+            <div class="row"><span class="k">CONFLICTS</span><span class="v green">0</span></div>
+            <div class="row"><span class="k">OCT-SHIFT</span><span class="v amber">3 NODES</span></div>
+            <div class="why">
+              <b>// ANALYST</b><br>
+              原曲平均音高 #G4 高于口琴舒适区 3 个半音。<b>+2 移调</b>后<strong class="green">零丢音</strong>，
+              中段延音保留情感。0.85× 速度避免 16 分音符糊掉。
+            </div>
+          </div>
+        </div>
+
+        <!-- NPC 任务码 -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">NPC CODES</div>
+            <span class="card-tag amber">S11</span>
+          </div>
+          <div class="npc-list">
+            <div class="npc-item done">
+              <span class="name">佐拉</span>
+              <span class="code">7676354</span>
+              <span class="status">DONE</span>
+            </div>
+            <div class="npc-item">
+              <span class="name">佐拉 2</span>
+              <span class="code">7636767·1434</span>
+              <span class="status">PEND</span>
+            </div>
+            <div class="npc-item">
+              <span class="name">老乔</span>
+              <span class="code">5123543123</span>
+              <span class="status">PEND</span>
+            </div>
+            <div class="npc-item">
+              <span class="name">唐吉</span>
+              <span class="code">6712171</span>
+              <span class="status">PEND</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 曲库 -->
+        <div class="card" style="flex:1; min-height:0; display:flex; flex-direction:column;">
+          <div class="card-header">
+            <div class="card-title">LIBRARY</div>
+            <span class="card-tag">4 / 128</span>
+          </div>
+          <div class="lib-list" style="overflow-y:auto; flex:1;">
+            <div class="lib-item playing">
+              <div class="lib-cover"><svg viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></div>
+              <div class="lib-info">
+                <div class="t">父亲 · 三角洲口琴</div>
+                <div class="m">120 BPM · 4:13 · 96★</div>
+              </div>
+              <div class="lib-rating">4.9</div>
+            </div>
+            <div class="lib-item">
+              <div class="lib-cover"><svg viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></div>
+              <div class="lib-info">
+                <div class="t">鸟之诗 · 三角洲口琴</div>
+                <div class="m">76 BPM · 4:32 · 94★</div>
+              </div>
+              <div class="lib-rating">4.8</div>
+            </div>
+            <div class="lib-item">
+              <div class="lib-cover"><svg viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></div>
+              <div class="lib-info">
+                <div class="t">春日影 · 三角洲口琴</div>
+                <div class="m">132 BPM · 3:48 · 88★</div>
+              </div>
+              <div class="lib-rating">4.7</div>
+            </div>
+            <div class="lib-item">
+              <div class="lib-cover"><svg viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></div>
+              <div class="lib-info">
+                <div class="t">吹远航星的告别</div>
+                <div class="m">88 BPM · 5:21 · 91★</div>
+              </div>
+              <div class="lib-rating">4.6</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 统计 -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">SESSION STATS</div>
+          </div>
+          <div class="stats">
+            <div class="stat"><div class="v">234</div><div class="k">PLAYED</div></div>
+            <div class="stat"><div class="v">0</div><div class="k">CONFLICT</div></div>
+            <div class="stat"><div class="v">3</div><div class="k">OCTAVE</div></div>
+            <div class="stat"><div class="v">96</div><div class="k">SCORE</div></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  <div>
+    <span class="hl">HARMONICWIND</span> <span class="sep">//</span> WPF .NET 8 <span class="sep">//</span> SENDINPUT ONLY <span class="sep">//</span> NO INJECTION <span class="sep">//</span> NO DRIVER <span class="sep">//</span> NO MEMORY READ
+  </div>
+  <div>
+    BUILD 260926-1636 <span class="sep">//</span> 模拟输入仍可能违反用户协议
+  </div>
+</div>
+
+</body>
+</html>

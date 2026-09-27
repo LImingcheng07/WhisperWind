@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>风声未止 · 三角洲自动口琴 · 概念图 v4 · 诗与远方</title>
+<style>
+  /* === 诗与远方 · 清新风格 === */
+  :root {
+    /* 水墨淡彩主调 */
+    --paper:       #f5efe2;     /* 宣纸底 */
+    --paper-warm:  #ede4cf;     /* 暖宣 */
+    --ink-light:   #8a8678;     /* 淡墨 */
+    --ink-mid:     #4d5347;     /* 中墨 */
+    --ink-deep:    #2d3027;     /* 重墨 */
+    --bamboo:      #7a9474;     /* 竹青 */
+    --bamboo-soft: #b6c4a5;     /* 嫩竹 */
+    --sky:         #c7d3c4;     /* 远天 */
+    --sunset:      #d99c7a;     /* 落霞 */
+    --sunset-warm: #e8b48a;     /* 霞光 */
+    --plum:        #9b6b7a;     /* 暮山紫 */
+    --gold:        #b8924a;     /* 古铜金 */
+
+    --shadow-soft: 0 1px 2px rgba(74, 60, 30, 0.06);
+    --shadow-mid:  0 4px 12px rgba(74, 60, 30, 0.08);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: "Noto Serif SC", "Source Han Serif CN", "Songti SC", "STSong", "SimSun", serif;
+    background: var(--paper);
+    background-image:
+      radial-gradient(ellipse 600px 80px at 20% 0%, rgba(217, 156, 122, 0.10), transparent 70%),
+      radial-gradient(ellipse 800px 100px at 80% 0%, rgba(122, 148, 116, 0.10), transparent 70%),
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/><feColorMatrix values='0 0 0 0 0.5  0 0 0 0 0.4  0 0 0 0 0.2  0 0 0 0.04 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+    color: var(--ink-deep);
+    min-height: 100vh;
+    overflow: hidden;
+  }
+
+  /* === 远山背景 === */
+  .landscape {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    overflow: hidden;
+  }
+  .mountain {
+    position: absolute; bottom: 38%; left: 0; right: 0; height: 60%;
+    opacity: 0.32;
+  }
+  .mountain-1 { fill: #b6c4a5; bottom: 30%; }
+  .mountain-2 { fill: #8aa285; opacity: 0.28; bottom: 22%; }
+  .mountain-3 { fill: #6b8470; opacity: 0.20; bottom: 14%; }
+
+  /* 飞鸟 */
+  .birds { position: absolute; top: 8%; right: 6%; opacity: 0.55; }
+  .bird { fill: none; stroke: var(--ink-mid); stroke-width: 1.4; stroke-linecap: round; }
+
+  /* 落叶 */
+  .leaf {
+    position: absolute; width: 14px; height: 14px;
+    background: radial-gradient(circle at 30% 30%, var(--sunset), var(--sunset-warm));
+    border-radius: 0 100% 0 100%;
+    opacity: 0.55;
+    animation: drift 14s linear infinite;
+  }
+  .leaf:nth-child(1) { top: 20%; left: 12%; animation-delay: 0s; }
+  .leaf:nth-child(2) { top: 40%; left: 85%; animation-delay: -3s; transform: scale(0.7); }
+  .leaf:nth-child(3) { top: 60%; left: 25%; animation-delay: -6s; transform: scale(1.2); }
+  .leaf:nth-child(4) { top: 80%; left: 70%; animation-delay: -9s; transform: scale(0.8); }
+  @keyframes drift {
+    0%   { transform: translate(0, 0) rotate(0); opacity: 0; }
+    15%  { opacity: 0.55; }
+    85%  { opacity: 0.55; }
+    100% { transform: translate(60px, 200px) rotate(360deg); opacity: 0; }
+  }
+
+  /* === 顶部卷轴标题 === */
+  .title-bar {
+    position: relative; z-index: 5;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 22px 36px 16px;
+    background: linear-gradient(to bottom, rgba(245, 239, 226, 0.85), rgba(245, 239, 226, 0));
+  }
+  .brand {
+    display: flex; align-items: center; gap: 14px;
+  }
+  .seal {
+    width: 48px; height: 48px;
+    position: relative;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .seal svg { width: 100%; height: 100%; display: block; }
+  .brand-text { line-height: 1.1; }
+  .brand-cn {
+    font-size: 22px; font-weight: 600; color: var(--ink-deep);
+    letter-spacing: 4px;
+  }
+  .brand-en {
+    font-size: 11px; color: var(--ink-light);
+    letter-spacing: 2px;
+    font-style: italic;
+    font-family: "Georgia", serif;
+    margin-top: 2px;
+  }
+  .meta-line {
+    display: flex; align-items: center; gap: 18px;
+    font-size: 12px; color: var(--ink-light);
+    font-family: "Georgia", serif;
+  }
+  .meta-line .dot { color: var(--ink-light); }
+  .meta-line .quiet { color: var(--ink-light); }
+  .meta-line .ver { color: var(--gold); font-style: italic; }
+
+  /* === 主体三栏 === */
+  .main {
+    position: relative; z-index: 4;
+    display: grid;
+    grid-template-columns: 220px 1fr 280px;
+    gap: 18px;
+    padding: 0 32px;
+    height: calc(100vh - 88px);
+  }
+  .col { min-height: 0; }
+  .col-l, .col-r { padding-top: 8px; }
+
+  /* 通用卡片 */
+  .paper-card {
+    background: rgba(253, 248, 236, 0.78);
+    border: 1px solid rgba(74, 60, 30, 0.10);
+    border-radius: 6px;
+    box-shadow: var(--shadow-soft);
+    padding: 16px 18px;
+    position: relative;
+    backdrop-filter: blur(2px);
+  }
+  .paper-card::before {
+    content: ""; position: absolute; left: 0; top: 8px; bottom: 8px; width: 3px;
+    background: linear-gradient(to bottom, var(--sunset), var(--bamboo));
+    border-radius: 0 2px 2px 0;
+    opacity: 0.5;
+  }
+  .paper-title {
+    font-size: 13px; font-weight: 600;
+    color: var(--ink-deep);
+    letter-spacing: 3px;
+    margin-bottom: 10px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .paper-title::after {
+    content: ""; flex: 1; height: 1px;
+    background: linear-gradient(to right, rgba(74,60,30,0.20), transparent);
+  }
+  .paper-sub {
+    font-size: 11px; color: var(--ink-light);
+    letter-spacing: 1.5px;
+    font-family: "Georgia", serif;
+    font-style: italic;
+  }
+
+  /* === 左侧：导航 + 调参 === */
+  .nav { display: flex; flex-direction: column; gap: 4px; padding: 8px 0; }
+  .nav-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 11px 14px;
+    border-radius: 4px;
+    font-size: 14px;
+    color: var(--ink-mid);
+    cursor: pointer;
+    letter-spacing: 2px;
+    transition: all .2s;
+  }
+  .nav-item:hover { background: rgba(217, 156, 122, 0.08); }
+  .nav-item.active {
+    background: linear-gradient(90deg, rgba(217, 156, 122, 0.18), rgba(217, 156, 122, 0));
+    color: var(--ink-deep);
+    font-weight: 600;
+  }
+  .nav-item .num {
+    font-size: 11px; color: var(--ink-light);
+    font-family: "Georgia", serif; font-style: italic;
+  }
+  .nav-item.active .num { color: var(--gold); }
+  .nav-item .ico {
+    width: 20px; height: 20px; flex-shrink: 0;
+    color: var(--ink-light);
+    opacity: 0.7;
+  }
+  .nav-item .ico svg { width: 100%; height: 100%; display: block; }
+  .nav-item.active .ico { color: var(--ink-deep); opacity: 1; }
+  .nav-item:hover .ico { opacity: 1; }
+
+  .knob-card { margin-top: 14px; }
+  .knob-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 9px 0;
+    border-bottom: 1px dashed rgba(74,60,30,0.10);
+    font-size: 12px;
+  }
+  .knob-row:last-child { border-bottom: none; }
+  .knob-label { color: var(--ink-mid); letter-spacing: 1.5px; }
+  .knob-val { color: var(--ink-deep); font-family: "Georgia", serif; font-style: italic; }
+  .knob-val .unit { color: var(--ink-light); font-size: 10px; margin-left: 2px; }
+  .ink-slider {
+    width: 100%; height: 4px; margin-top: 4px;
+    background: linear-gradient(to right, var(--bamboo), var(--bamboo-soft));
+    border-radius: 2px; position: relative;
+  }
+  .ink-slider::after {
+    content: ""; position: absolute; left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+    width: 14px; height: 14px; border-radius: 50%;
+    background: var(--paper);
+    border: 2px solid var(--gold);
+    box-shadow: 0 0 0 4px rgba(184, 146, 74, 0.15);
+  }
+
+  /* === 中央：曲目 + 演奏视图 === */
+  .stage { display: flex; flex-direction: column; gap: 14px; min-height: 0; }
+
+  .now-playing {
+    background: linear-gradient(135deg, rgba(237, 228, 207, 0.85), rgba(245, 239, 226, 0.65));
+    border: 1px solid rgba(74, 60, 30, 0.10);
+    border-radius: 6px;
+    padding: 20px 24px;
+    position: relative; overflow: hidden;
+    box-shadow: var(--shadow-mid);
+  }
+  .now-playing::before {
+    content: ""; position: absolute; right: -40px; top: -40px;
+    width: 160px; height: 160px;
+    background: radial-gradient(circle, var(--sunset-warm) 0%, transparent 70%);
+    opacity: 0.20;
+  }
+  .now-playing::after {
+    /* 印章风格水印 */
+    content: "风"; position: absolute; right: 24px; top: 50%;
+    transform: translateY(-50%);
+    font-size: 64px; color: #c14a3a;
+    font-family: "STKaiti", "KaiTi", serif;
+    font-weight: 700;
+    opacity: 0.10;
+    line-height: 1;
+  }
+  .np-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  .np-label {
+    font-size: 11px; color: var(--ink-light);
+    letter-spacing: 4px;
+    font-family: "Georgia", serif;
+    font-style: italic;
+  }
+  .np-verse {
+    font-size: 13px; color: var(--ink-mid);
+    letter-spacing: 2px;
+    font-style: italic;
+  }
+  .np-title {
+    font-size: 28px; font-weight: 600;
+    color: var(--ink-deep);
+    letter-spacing: 6px;
+    line-height: 1.2;
+    margin: 4px 0 4px;
+  }
+  .np-author {
+    font-size: 13px; color: var(--ink-mid);
+    letter-spacing: 2px;
+    font-style: italic;
+  }
+  .np-stats {
+    display: flex; gap: 24px;
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px dashed rgba(74,60,30,0.15);
+  }
+  .np-stat { display: flex; flex-direction: column; gap: 2px; }
+  .np-stat-k { font-size: 10px; color: var(--ink-light); letter-spacing: 2px; font-family: "Georgia", serif; }
+  .np-stat-v { font-size: 15px; color: var(--ink-deep); font-weight: 500; }
+  .np-stat-v .x { font-size: 11px; color: var(--ink-light); margin-left: 2px; }
+
+  /* 播放控制 — 国风几何按钮 */
+  .play-row {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 16px;
+  }
+  .play-buttons { display: flex; align-items: center; gap: 10px; }
+  .pbtn {
+    width: 38px; height: 38px;
+    background: var(--paper-warm);
+    border: 1px solid rgba(74,60,30,0.20);
+    color: var(--ink-mid);
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all .2s;
+  }
+  .pbtn svg { width: 16px; height: 16px; display: block; color: currentColor; }
+  .pbtn:hover { background: var(--sunset-warm); color: var(--paper); border-color: var(--sunset); }
+  .pbtn.play {
+    width: 52px; height: 52px;
+    background: linear-gradient(135deg, #c14a3a, #d99c7a);
+    color: #f5efe2;
+    border: none;
+    box-shadow: 0 4px 14px rgba(193, 74, 58, 0.30), inset 0 1px 0 rgba(255,240,220,0.25);
+  }
+  .pbtn.play svg { width: 20px; height: 20px; }
+  .pbtn-meta {
+    display: flex; align-items: center; gap: 14px;
+    font-size: 12px;
+    color: var(--ink-light);
+    font-family: "Georgia", serif;
+    font-style: italic;
+  }
+  .pbtn-meta kbd {
+    display: inline-block;
+    padding: 1px 6px;
+    background: var(--paper-warm);
+    border: 1px solid rgba(74,60,30,0.20);
+    border-radius: 3px;
+    font-size: 10px;
+    color: var(--ink-mid);
+    font-family: "Georgia", serif;
+    font-style: normal;
+    margin: 0 2px;
+  }
+
+  /* === 口琴视图（诗意版） === */
+  .harmonica-view {
+    flex: 1; min-height: 0;
+    background: linear-gradient(180deg, rgba(199, 211, 196, 0.20), rgba(245, 239, 226, 0.40));
+    border: 1px solid rgba(74, 60, 30, 0.10);
+    border-radius: 6px;
+    padding: 20px 24px;
+    display: flex; flex-direction: column;
+    position: relative; overflow: hidden;
+  }
+  .sky {
+    position: absolute; top: 0; left: 0; right: 0; height: 50%;
+    background: linear-gradient(180deg,
+      rgba(199, 211, 196, 0.45) 0%,
+      rgba(217, 156, 122, 0.18) 70%,
+      rgba(245, 239, 226, 0) 100%);
+  }
+  .hv-header {
+    position: relative; display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 6px;
+  }
+  .hv-title {
+    font-size: 14px; color: var(--ink-deep);
+    letter-spacing: 4px; font-weight: 500;
+  }
+  .hv-rime {
+    font-size: 11px; color: var(--ink-light);
+    font-style: italic;
+    font-family: "Georgia", serif;
+  }
+  .hv-poem {
+    position: relative;
+    text-align: center;
+    font-size: 13px;
+    color: var(--ink-mid);
+    letter-spacing: 3px;
+    margin: 6px 0 14px;
+    font-style: italic;
+  }
+
+  .harmonica-stage {
+    position: relative; flex: 1;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 10px;
+  }
+  /* 风的曲线（多线动画） */
+  .wind {
+    position: absolute; left: 0; right: 0;
+    height: 60px;
+    pointer-events: none;
+  }
+  .wind-1 { top: 22%; }
+  .wind-2 { top: 38%; }
+  .wind-3 { top: 54%; }
+  .wind-line {
+    width: 100%; height: 100%;
+    fill: none;
+    stroke: var(--ink-light);
+    stroke-width: 1;
+    opacity: 0.30;
+    stroke-dasharray: 1 4;
+    stroke-linecap: round;
+    animation: wind-flow 6s linear infinite;
+  }
+  .wind-1 .wind-line { animation-delay: 0s; }
+  .wind-2 .wind-line { animation-delay: -2s; }
+  .wind-3 .wind-line { animation-delay: -4s; }
+  @keyframes wind-flow {
+    from { stroke-dashoffset: 0; }
+    to   { stroke-dashoffset: -50; }
+  }
+
+  /* 吹奏场景：左侧水墨松 + 右侧水墨远山/飞鸟 */
+  .scene-side {
+    position: relative;
+    width: 90px; height: 130px;
+    flex-shrink: 0;
+  }
+  .scene-side svg { width: 100%; height: 100%; }
+  /* 主体仍是中间的口琴，两侧配松/远山做诗意背景 */
+
+  .instrument-body {
+    position: relative;
+    width: 320px; height: 70px;
+    background: linear-gradient(180deg,
+      #e8d4a8 0%,
+      #d4b87a 50%,
+      #b8924a 100%);
+    border-radius: 8px;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 245, 220, 0.5),
+      inset 0 -2px 0 rgba(80, 50, 20, 0.2),
+      0 6px 20px rgba(74, 60, 30, 0.20);
+    display: flex; align-items: center; justify-content: center;
+    gap: 4px;
+    padding: 0 16px;
+  }
+  .instrument-body::before, .instrument-body::after {
+    content: ""; position: absolute; top: 8px; bottom: 8px; width: 1px;
+    background: rgba(80, 50, 20, 0.30);
+  }
+  .instrument-body::before { left: 50px; }
+  .instrument-body::after  { right: 50px; }
+
+  .hole {
+    flex: 1; max-width: 18px; height: 38px;
+    background: linear-gradient(180deg, #4a3520, #2a1d10);
+    border-radius: 50%;
+    position: relative;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.4);
+  }
+  .hole.active {
+    background: linear-gradient(180deg, #ffd9a0, #ff9a5a);
+    box-shadow: 0 0 12px rgba(255, 154, 90, 0.6), inset 0 2px 4px rgba(0,0,0,0.2);
+  }
+  .hole.active::after {
+    content: "♪"; position: absolute; top: -22px; left: 50%;
+    transform: translateX(-50%);
+    font-size: 18px; color: var(--sunset);
+    text-shadow: 0 0 6px rgba(255,154,90,0.5);
+    animation: note-up 1.4s ease-out infinite;
+  }
+  @keyframes note-up {
+    0%   { transform: translateX(-50%) translateY(0); opacity: 1; }
+    100% { transform: translateX(-50%) translateY(-30px); opacity: 0; }
+  }
+
+  /* 测参诗意化 */
+  .hv-stats {
+    position: relative;
+    display: flex; justify-content: space-around;
+    padding-top: 12px;
+    margin-top: 8px;
+    border-top: 1px dashed rgba(74,60,30,0.15);
+  }
+  .hv-stat {
+    text-align: center;
+  }
+  .hv-stat-k {
+    font-size: 10px; color: var(--ink-light);
+    letter-spacing: 2px;
+    font-family: "Georgia", serif;
+    font-style: italic;
+  }
+  .hv-stat-v {
+    font-size: 16px; color: var(--ink-deep);
+    font-weight: 500;
+    margin-top: 2px;
+    font-family: "Georgia", serif;
+  }
+  .hv-stat-v .u { font-size: 10px; color: var(--ink-light); margin-left: 2px; }
+
+  /* 钢琴卷帘（竖向意绘） */
+  .roll-card {
+    height: 110px;
+    background: rgba(253, 248, 236, 0.78);
+    border: 1px solid rgba(74, 60, 30, 0.10);
+    border-radius: 6px;
+    padding: 12px 18px;
+    position: relative;
+    box-shadow: var(--shadow-soft);
+  }
+  .roll-title-row {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 6px;
+  }
+  .roll-title { font-size: 11px; color: var(--ink-light); letter-spacing: 3px; font-family: "Georgia", serif; font-style: italic; }
+  .roll-axis { font-size: 10px; color: var(--ink-light); font-family: "Georgia", serif; }
+  .roll-canvas { position: relative; height: 56px; }
+
+  /* === 右侧：情报 + 曲库 === */
+  .col-r { display: flex; flex-direction: column; gap: 12px; }
+  .scroll-card {
+    /* 卷轴风格 */
+    background:
+      linear-gradient(to right, var(--paper-warm) 0%, var(--paper-warm) 8px, rgba(253,248,236,0.78) 8px, rgba(253,248,236,0.78) calc(100% - 8px), var(--paper-warm) calc(100% - 8px), var(--paper-warm) 100%),
+      var(--paper-warm);
+    border-radius: 4px;
+    box-shadow: var(--shadow-mid);
+    padding: 20px 18px;
+    position: relative;
+  }
+  .scroll-card::before, .scroll-card::after {
+    /* 卷轴端头 */
+    content: ""; position: absolute; left: -3px; top: 50%; transform: translateY(-50%);
+    width: 14px; height: 30px;
+    background: linear-gradient(135deg, #b8924a, #8a6a30);
+    border-radius: 4px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+  }
+  .scroll-card::after { left: auto; right: -3px; }
+
+  .verse {
+    font-size: 14px; line-height: 2;
+    color: var(--ink-deep);
+    letter-spacing: 3px;
+    text-align: center;
+    font-style: italic;
+  }
+  .verse .punct { color: var(--gold); }
+  .verse .light { color: var(--ink-light); }
+
+  .scroll-foot {
+    text-align: center; font-size: 10px;
+    color: var(--ink-light); letter-spacing: 2px;
+    margin-top: 12px;
+    font-family: "Georgia", serif;
+    font-style: italic;
+  }
+
+  .library-list { display: flex; flex-direction: column; gap: 8px; }
+  .lib-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 9px 12px;
+    border-bottom: 1px dashed rgba(74,60,30,0.10);
+    font-size: 13px;
+    color: var(--ink-mid);
+    cursor: pointer;
+  }
+  .lib-item:hover { background: rgba(217, 156, 122, 0.08); }
+  .lib-name { letter-spacing: 2px; }
+  .lib-name .en { font-size: 10px; color: var(--ink-light); font-style: italic; font-family: "Georgia", serif; margin-left: 6px; }
+  .lib-time { font-size: 11px; color: var(--ink-light); font-family: "Georgia", serif; }
+
+  .npc-card { display: flex; flex-direction: column; gap: 8px; }
+  .npc-line {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 6px 0;
+    border-bottom: 1px dashed rgba(74,60,30,0.10);
+    font-size: 12px;
+  }
+  .npc-line:last-child { border-bottom: none; }
+  .npc-name { color: var(--ink-deep); letter-spacing: 2px; }
+  .npc-name .desc { font-size: 10px; color: var(--ink-light); font-style: italic; font-family: "Georgia", serif; margin-left: 6px; }
+  .npc-code { color: var(--gold); font-family: "Georgia", serif; letter-spacing: 1px; }
+  .npc-status { font-size: 10px; padding: 2px 8px; border-radius: 10px; display: inline-flex; align-items: center; gap: 4px; }
+  .npc-status svg { width: 10px; height: 10px; display: block; }
+  .npc-status.ok { color: #5a6e4a; background: rgba(122, 148, 116, 0.12); border: 1px solid rgba(122, 148, 116, 0.25); }
+  .npc-status.lock { color: var(--ink-light); background: rgba(74,60,30,0.05); border: 1px solid rgba(74,60,30,0.10); }
+
+  /* 底部状态行 */
+  .footer {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 6;
+    padding: 6px 32px;
+    background: linear-gradient(to top, rgba(245, 239, 226, 0.95), rgba(245, 239, 226, 0));
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 10px;
+    color: var(--ink-light);
+    letter-spacing: 2px;
+    font-family: "Georgia", serif;
+    font-style: italic;
+  }
+  .footer .pipe { color: var(--ink-light); opacity: 0.5; margin: 0 8px; }
+  .footer .dot-live {
+    display: inline-block; width: 6px; height: 6px;
+    background: var(--bamboo); border-radius: 50%;
+    margin-right: 4px; vertical-align: middle;
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+</style>
+</head>
+<body>
+
+<!-- 远山背景 -->
+<svg class="landscape" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice">
+  <!-- 飞鸟群 -->
+  <g class="birds">
+    <path class="bird" d="M0 6 Q 6 0 12 6 Q 18 0 24 6"/>
+    <path class="bird" d="M30 14 Q 35 9 40 14 Q 45 9 50 14"/>
+    <path class="bird" d="M10 22 Q 14 18 18 22 Q 22 18 26 22"/>
+  </g>
+  <!-- 远山三层 -->
+  <path class="mountain mountain-1" d="M 0 600 L 120 480 L 240 540 L 360 420 L 500 500 L 640 380 L 780 470 L 900 410 L 1040 490 L 1180 420 L 1320 480 L 1460 400 L 1600 460 L 1600 900 L 0 900 Z"/>
+  <path class="mountain mountain-2" d="M 0 700 L 100 580 L 220 640 L 340 520 L 480 600 L 620 500 L 760 590 L 920 530 L 1080 600 L 1240 520 L 1380 590 L 1520 510 L 1600 560 L 1600 900 L 0 900 Z"/>
+  <path class="mountain mountain-3" d="M 0 800 L 140 700 L 280 760 L 420 660 L 560 730 L 720 640 L 880 720 L 1040 670 L 1200 730 L 1360 670 L 1500 740 L 1600 700 L 1600 900 L 0 900 Z"/>
+</svg>
+
+<!-- 落叶 -->
+<div class="leaf"></div>
+<div class="leaf"></div>
+<div class="leaf"></div>
+<div class="leaf"></div>
+
+<!-- 顶部 -->
+<header class="title-bar">
+  <div class="brand">
+    <div class="seal" title="风声未止">
+      <!-- 印章：朱砂方印 + 篆体「风声」二字 -->
+      <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+        <!-- 朱砂方印 + 边角残破（用 4 个圆角矩形 + 不规则缺口模拟） -->
+        <defs>
+          <mask id="seal-mask">
+            <rect x="0" y="0" width="48" height="48" fill="white"/>
+            <circle cx="3" cy="4" r="2.2" fill="black"/>
+            <circle cx="44" cy="6" r="1.8" fill="black"/>
+            <circle cx="6" cy="44" r="2" fill="black"/>
+            <circle cx="46" cy="46" r="2.5" fill="black"/>
+            <circle cx="20" cy="2" r="0.8" fill="black"/>
+            <circle cx="36" cy="46" r="1" fill="black"/>
+          </mask>
+        </defs>
+        <g mask="url(#seal-mask)">
+          <rect x="3" y="3" width="42" height="42" rx="2" fill="#c14a3a"/>
+        </g>
+        <rect x="3.5" y="3.5" width="41" height="41" rx="1.5" fill="none" stroke="#f5efe2" stroke-width="0.6" opacity="0.35"/>
+        <text x="24" y="22" text-anchor="middle" font-family="STKaiti, KaiTi, serif" font-size="14" font-weight="700" fill="#f5efe2" letter-spacing="1">风</text>
+        <text x="24" y="38" text-anchor="middle" font-family="STKaiti, KaiTi, serif" font-size="14" font-weight="700" fill="#f5efe2" letter-spacing="1">声</text>
+        <line x1="6" y1="26" x2="42" y2="26" stroke="#f5efe2" stroke-width="0.4" opacity="0.30"/>
+      </svg>
+    </div>
+    <div class="brand-text">
+      <div class="brand-cn">风声未止</div>
+      <div class="brand-en">WhisperWind · delta force auto harmonica · v0.4</div>
+    </div>
+  </div>
+  <div class="meta-line">
+    <span>· 三角洲 S11 ·</span>
+    <span class="dot">·</span>
+    <span class="quiet">SendInput Only</span>
+    <span class="dot">·</span>
+    <span class="ver">Beta</span>
+  </div>
+</header>
+
+<!-- 主体三栏 -->
+<main class="main">
+
+  <!-- 左侧 -->
+  <aside class="col col-l">
+
+    <div class="paper-card">
+      <div class="paper-title">栏目</div>
+      <nav class="nav">
+        <div class="nav-item active">
+          <span class="num">壹</span>
+          <span class="ico">
+            <!-- 口琴简笔 -->
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="9" width="18" height="6" rx="1.2"/>
+              <line x1="6" y1="9" x2="6" y2="15"/>
+              <line x1="9" y1="9" x2="9" y2="15"/>
+              <line x1="12" y1="9" x2="12" y2="15"/>
+              <line x1="15" y1="9" x2="15" y2="15"/>
+              <line x1="18" y1="9" x2="18" y2="15"/>
+              <circle cx="7.5" cy="12" r="0.8" fill="currentColor" stroke="none"/>
+              <circle cx="12" cy="12" r="0.8" fill="currentColor" stroke="none"/>
+              <circle cx="16.5" cy="12" r="0.8" fill="currentColor" stroke="none"/>
+            </svg>
+          </span>
+          <span>正在吹</span>
+        </div>
+        <div class="nav-item">
+          <span class="num">贰</span>
+          <span class="ico">
+            <!-- 曲谱/书页 -->
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M5 4 H10 a2 2 0 0 1 2 2 v14"/>
+              <path d="M19 4 H14 a2 2 0 0 0 -2 2 v14"/>
+              <line x1="3" y1="4" x2="3" y2="20"/>
+              <line x1="21" y1="4" x2="21" y2="20"/>
+              <line x1="5" y1="8" x2="9" y2="8"/>
+              <line x1="5" y1="11" x2="9" y2="11"/>
+              <line x1="15" y1="8" x2="19" y2="8"/>
+              <line x1="15" y1="11" x2="19" y2="11"/>
+            </svg>
+          </span>
+          <span>曲库</span>
+        </div>
+        <div class="nav-item">
+          <span class="num">叁</span>
+          <span class="ico">
+            <!-- 山峰远眺 -->
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 19 L9 11 L13 15 L17 9 L21 14 L21 20 L3 20 Z"/>
+              <circle cx="17" cy="5" r="1.5"/>
+              <path d="M9 11 L11 8 L13 10"/>
+            </svg>
+          </span>
+          <span>山间小调</span>
+        </div>
+        <div class="nav-item">
+          <span class="num">肆</span>
+          <span class="ico">
+            <!-- 竹简/竹牌 -->
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="4" width="18" height="4" rx="0.6"/>
+              <rect x="3" y="10" width="18" height="4" rx="0.6"/>
+              <rect x="3" y="16" width="18" height="4" rx="0.6"/>
+              <line x1="6" y1="6" x2="18" y2="6"/>
+              <line x1="6" y1="12" x2="18" y2="12"/>
+              <line x1="6" y1="18" x2="18" y2="18"/>
+            </svg>
+          </span>
+          <span>NPC 歌诀</span>
+        </div>
+        <div class="nav-item">
+          <span class="num">伍</span>
+          <span class="ico">
+            <!-- 铃/磬（AI 知音） -->
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M7 8 a5 5 0 0 1 10 0 v6 l2 3 H5 l2-3 Z"/>
+              <line x1="9" y1="11" x2="9" y2="13"/>
+              <line x1="12" y1="11" x2="12" y2="13"/>
+              <line x1="15" y1="11" x2="15" y2="13"/>
+              <path d="M12 3 v3"/>
+              <circle cx="12" cy="2.5" r="0.8" fill="currentColor" stroke="none"/>
+              <path d="M10 19 q2 1 4 0"/>
+            </svg>
+          </span>
+          <span>知音 AI</span>
+        </div>
+      </nav>
+    </div>
+
+    <div class="paper-card knob-card">
+      <div class="paper-title">调音</div>
+      <div class="knob-row">
+        <span class="knob-label">节拍</span>
+        <span class="knob-val">1.00 <span class="unit">x</span></span>
+      </div>
+      <div class="ink-slider"></div>
+      <div class="knob-row">
+        <span class="knob-label">移调</span>
+        <span class="knob-val">+2 <span class="unit">st</span></span>
+      </div>
+      <div class="ink-slider"></div>
+      <div class="knob-row">
+        <span class="knob-label">倒计时</span>
+        <span class="knob-val">3 <span class="unit">s</span></span>
+      </div>
+      <div class="knob-row">
+        <span class="knob-label">松指</span>
+        <span class="knob-val">20 <span class="unit">ms</span></span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- 中央：曲目 + 口琴 + 卷帘 -->
+  <section class="col col-c stage">
+
+    <div class="now-playing">
+      <div class="np-header">
+        <div class="np-label">NOW · 此刻</div>
+        <div class="np-verse">「长亭外，古道边，芳草碧连天」</div>
+      </div>
+      <div class="np-title">送 别</div>
+      <div class="np-author">— 李叔同 · 清 民国</div>
+      <div class="np-stats">
+        <div class="np-stat">
+          <span class="np-stat-k">BPM</span>
+          <span class="np-stat-v">66</span>
+        </div>
+        <div class="np-stat">
+          <span class="np-stat-k">DURATION</span>
+          <span class="np-stat-v">4 <span class="x">:</span> 32 <span class="x">min</span></span>
+        </div>
+        <div class="np-stat">
+          <span class="np-stat-k">NOTES</span>
+          <span class="np-stat-v">386</span>
+        </div>
+        <div class="np-stat">
+          <span class="np-stat-k">OCT-SHIFT</span>
+          <span class="np-stat-v">无</span>
+        </div>
+        <div class="np-stat">
+          <span class="np-stat-k">SCORE</span>
+          <span class="np-stat-v">96 <span class="x">/ 100</span></span>
+        </div>
+      </div>
+      <div class="play-row">
+        <div class="play-buttons">
+          <div class="pbtn" title="上一首">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M6 5 L6 19"/>
+              <path d="M20 5 L9 12 L20 19 Z" fill="currentColor" stroke="none"/>
+            </svg>
+          </div>
+          <div class="pbtn play" title="演奏 F8">
+            <svg viewBox="0 0 24 24" fill="currentColor" stroke="none">
+              <path d="M7 5 L19 12 L7 19 Z"/>
+            </svg>
+          </div>
+          <div class="pbtn" title="停止 F9">
+            <svg viewBox="0 0 24 24" fill="currentColor" stroke="none">
+              <rect x="6" y="6" width="12" height="12" rx="1"/>
+            </svg>
+          </div>
+          <div class="pbtn" title="下一首">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 5 L18 19"/>
+              <path d="M4 5 L15 12 L4 19 Z" fill="currentColor" stroke="none"/>
+            </svg>
+          </div>
+        </div>
+        <div class="pbtn-meta">
+          <span><kbd>F8</kbd> 吹奏</span>
+          <span><kbd>F9</kbd> 止</span>
+          <span><kbd>Space</kbd> 选轨</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="harmonica-view">
+      <div class="sky"></div>
+      <div class="hv-header">
+        <div class="hv-title">十孔 · 此刻</div>
+        <div class="hv-rime">C-major · A 调</div>
+      </div>
+      <div class="hv-poem">「晚风拂山岗，口琴声悠长」</div>
+
+      <div class="harmonica-stage">
+        <div class="wind wind-1"><svg class="wind-line" viewBox="0 0 800 60" preserveAspectRatio="none"><path d="M0 30 Q 100 10 200 30 T 400 30 T 600 30 T 800 30" /></svg></div>
+        <div class="wind wind-2"><svg class="wind-line" viewBox="0 0 800 60" preserveAspectRatio="none"><path d="M0 30 Q 100 50 200 30 T 400 30 T 600 30 T 800 30" /></svg></div>
+        <div class="wind wind-3"><svg class="wind-line" viewBox="0 0 800 60" preserveAspectRatio="none"><path d="M0 30 Q 100 20 200 30 T 400 30 T 600 30 T 800 30" /></svg></div>
+
+        <div class="performer" style="display:flex; align-items:center; justify-content:center; gap:18px;">
+          <!-- 左侧：水墨松 -->
+          <div class="scene-side">
+            <svg viewBox="0 0 90 130" xmlns="http://www.w3.org/2000/svg">
+              <!-- 树干（淡墨一笔） -->
+              <path d="M 50 130 Q 48 90 45 60 Q 42 35 38 12" stroke="#3a3526" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.7"/>
+              <path d="M 45 60 Q 30 50 18 40" stroke="#3a3526" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.6"/>
+              <path d="M 45 60 Q 60 52 72 44" stroke="#3a3526" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.6"/>
+              <path d="M 42 35 Q 30 26 20 22" stroke="#3a3526" stroke-width="1.2" fill="none" stroke-linecap="round" opacity="0.55"/>
+              <!-- 松针（点簇） -->
+              <g fill="#5a6e4a" opacity="0.75">
+                <ellipse cx="14" cy="40" rx="14" ry="6" transform="rotate(-25 14 40)"/>
+                <ellipse cx="20" cy="22" rx="16" ry="7" transform="rotate(-15 20 22)"/>
+                <ellipse cx="38" cy="12" rx="18" ry="7" transform="rotate(5 38 12)"/>
+                <ellipse cx="76" cy="44" rx="14" ry="6" transform="rotate(20 76 44)"/>
+                <ellipse cx="58" cy="20" rx="12" ry="5" transform="rotate(30 58 20)"/>
+                <ellipse cx="50" cy="48" rx="20" ry="7" transform="rotate(-5 50 48)"/>
+              </g>
+              <!-- 苔点（朱砂小点） -->
+              <g fill="#c14a3a" opacity="0.55">
+                <circle cx="22" cy="36" r="1.4"/>
+                <circle cx="46" cy="14" r="1.2"/>
+                <circle cx="62" cy="48" r="1.4"/>
+                <circle cx="14" cy="44" r="1.0"/>
+              </g>
+            </svg>
+          </div>
+
+          <!-- 口琴 -->
+          <div class="instrument-body">
+            <div class="hole"></div>
+            <div class="hole active"></div>
+            <div class="hole"></div>
+            <div class="hole active"></div>
+            <div class="hole"></div>
+            <div class="hole active"></div>
+            <div class="hole"></div>
+            <div class="hole"></div>
+            <div class="hole active"></div>
+            <div class="hole"></div>
+          </div>
+
+          <!-- 右侧：水墨远山 + 飞鸟 + 太阳 -->
+          <div class="scene-side">
+            <svg viewBox="0 0 90 130" xmlns="http://www.w3.org/2000/svg">
+              <!-- 落日（朱砂印） -->
+              <circle cx="62" cy="38" r="14" fill="#d99c7a" opacity="0.7"/>
+              <circle cx="62" cy="38" r="14" fill="none" stroke="#b87a5a" stroke-width="0.8" opacity="0.5"/>
+              <!-- 远山（淡墨层次） -->
+              <path d="M 0 110 L 12 92 L 28 102 L 44 80 L 60 95 L 78 78 L 90 88 L 90 130 L 0 130 Z" fill="#7a9474" opacity="0.4"/>
+              <path d="M 0 118 L 18 102 L 34 110 L 52 96 L 70 108 L 90 100 L 90 130 L 0 130 Z" fill="#5a6e4a" opacity="0.55"/>
+              <!-- 飞鸟（两笔） -->
+              <g fill="none" stroke="#3a3526" stroke-width="1.4" stroke-linecap="round" opacity="0.75">
+                <path d="M 22 30 Q 26 26 30 30 Q 34 26 38 30"/>
+                <path d="M 32 42 Q 35 39 38 42 Q 41 39 44 42"/>
+              </g>
+              <!-- 水面线（极淡） -->
+              <path d="M 0 124 Q 22 122 44 124 T 90 124" stroke="#3a3526" stroke-width="0.6" fill="none" opacity="0.3"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="hv-stats">
+        <div class="hv-stat">
+          <div class="hv-stat-k">气流</div>
+          <div class="hv-stat-v">2.4 <span class="u">m/s</span></div>
+        </div>
+        <div class="hv-stat">
+          <div class="hv-stat-k">音准</div>
+          <div class="hv-stat-v">±3 <span class="u">cent</span></div>
+        </div>
+        <div class="hv-stat">
+          <div class="hv-stat-k">节拍</div>
+          <div class="hv-stat-v">66 <span class="u">bpm</span></div>
+        </div>
+        <div class="hv-stat">
+          <div class="hv-stat-k">奏者</div>
+          <div class="hv-stat-v">远山客</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="roll-card">
+      <div class="roll-title-row">
+        <div class="roll-title">♪ 音 流 · WHISPER STREAM</div>
+        <div class="roll-axis">0:00 ────── 2:16 ────── 4:32</div>
+      </div>
+      <div class="roll-canvas">
+        <svg viewBox="0 0 1200 56" preserveAspectRatio="none" style="width:100%;height:100%;">
+          <defs>
+            <linearGradient id="g1" x1="0" x2="1">
+              <stop offset="0" stop-color="#d99c7a" stop-opacity="0.6"/>
+              <stop offset="1" stop-color="#7a9474" stop-opacity="0.6"/>
+            </linearGradient>
+          </defs>
+          <line x1="0" y1="14" x2="1200" y2="14" stroke="#8a8678" stroke-opacity="0.2" stroke-dasharray="2 4"/>
+          <line x1="0" y1="28" x2="1200" y2="28" stroke="#8a8678" stroke-opacity="0.2" stroke-dasharray="2 4"/>
+          <line x1="0" y1="42" x2="1200" y2="42" stroke="#8a8678" stroke-opacity="0.2" stroke-dasharray="2 4"/>
+          <rect x="20"   y="8"  width="60" height="6"  rx="3" fill="url(#g1)"/>
+          <rect x="100"  y="20" width="80" height="6"  rx="3" fill="#7a9474" opacity="0.6"/>
+          <rect x="200"  y="14" width="40" height="6"  rx="3" fill="url(#g1)"/>
+          <rect x="260"  y="32" width="100" height="6" rx="3" fill="#9b6b7a" opacity="0.5"/>
+          <rect x="380"  y="22" width="60" height="6"  rx="3" fill="url(#g1)"/>
+          <rect x="460"  y="10" width="80" height="6"  rx="3" fill="#7a9474" opacity="0.6"/>
+          <rect x="560"  y="26" width="50" height="6"  rx="3" fill="url(#g1)"/>
+          <rect x="630"  y="18" width="120" height="6" rx="3" fill="#9b6b7a" opacity="0.5"/>
+          <rect x="770"  y="34" width="60" height="6"  rx="3" fill="url(#g1)"/>
+          <rect x="850"  y="14" width="80" height="6"  rx="3" fill="#7a9474" opacity="0.6"/>
+          <rect x="950"  y="24" width="100" height="6" rx="3" fill="url(#g1)"/>
+          <rect x="1070" y="16" width="60" height="6"  rx="3" fill="#7a9474" opacity="0.6"/>
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <!-- 右侧 -->
+  <aside class="col col-r">
+
+    <div class="scroll-card">
+      <div class="paper-title" style="border:none; margin-bottom: 8px;">此刻心意</div>
+      <div class="verse">
+        长亭外<span class="punct">，</span>古道边<span class="punct">，</span><br>
+        芳草碧连天<span class="punct">。</span><br>
+        <span class="light">晚风拂山岗</span><span class="punct">，</span><br>
+        <span class="light">口琴声悠长</span><span class="punct">。</span>
+      </div>
+      <div class="scroll-foot">— AI 知音 · WhisperWind</div>
+    </div>
+
+    <div class="paper-card">
+      <div class="paper-title">山间小调</div>
+      <div class="library-list">
+        <div class="lib-item">
+          <span class="lib-name">送 别 <span class="en">Farewell</span></span>
+          <span class="lib-time">4:32</span>
+        </div>
+        <div class="lib-item">
+          <span class="lib-name">远航星 <span class="en">Voyage</span></span>
+          <span class="lib-time">3:48</span>
+        </div>
+        <div class="lib-item">
+          <span class="lib-name">春日影 <span class="en">Spring</span></span>
+          <span class="lib-time">3:21</span>
+        </div>
+        <div class="lib-item">
+          <span class="lib-name">父亲 <span class="en">Father</span></span>
+          <span class="lib-time">4:13</span>
+        </div>
+        <div class="lib-item">
+          <span class="lib-name">鸟之诗 <span class="en">Bird</span></span>
+          <span class="lib-time">3:55</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="paper-card">
+      <div class="paper-title">NPC 歌诀</div>
+      <div class="npc-card">
+        <div class="npc-line">
+          <span class="npc-name">佐拉 <span class="desc">第一曲</span></span>
+          <span class="npc-code">7676354</span>
+          <span class="npc-status ok">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 12 10 17 19 7"/></svg>
+            已记
+          </span>
+        </div>
+        <div class="npc-line">
+          <span class="npc-name">佐拉 <span class="desc">第二曲</span></span>
+          <span class="npc-code">7636767</span>
+          <span class="npc-status ok">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 12 10 17 19 7"/></svg>
+            已记
+          </span>
+        </div>
+        <div class="npc-line">
+          <span class="npc-name">老乔 <span class="desc">长歌</span></span>
+          <span class="npc-code">5123543123</span>
+          <span class="npc-status lock">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="5" y="11" width="14" height="10" rx="1.5"/>
+              <path d="M8 11 V8 a4 4 0 0 1 8 0 v3"/>
+            </svg>
+            待学
+          </span>
+        </div>
+        <div class="npc-line">
+          <span class="npc-name">唐吉 <span class="desc">小调</span></span>
+          <span class="npc-code">6712171</span>
+          <span class="npc-status lock">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="5" y="11" width="14" height="10" rx="1.5"/>
+              <path d="M8 11 V8 a4 4 0 0 1 8 0 v3"/>
+            </svg>
+            待学
+          </span>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+</main>
+
+<!-- 底部 -->
+<footer class="footer">
+  <div>
+    <span class="dot-live"></span>与游戏窗已连
+    <span class="pipe">|</span>
+    SendInput 模式
+    <span class="pipe">|</span>
+    2560 × 1440
+  </div>
+  <div>
+    <span>昨夜西风凋碧树</span>
+    <span class="pipe">·</span>
+    <span>独上高楼</span>
+    <span class="pipe">·</span>
+    <span>望尽天涯路</span>
+  </div>
+  <div>
+    风吹 · v0.4
+    <span class="pipe">|</span>
+    2026 · 听风
+  </div>
+</footer>
+
+</body>
+</html>

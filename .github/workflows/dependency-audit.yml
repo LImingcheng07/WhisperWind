@@ -1,0 +1,28 @@
+name: dependency-audit
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '0 0 * * 0'  # weekly
+
+jobs:
+  audit:
+    name: NuGet Vulnerability Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Restore
+        run: dotnet restore
+      - name: Audit
+        run: |
+          dotnet list package --vulnerable --include-transitive || {
+            echo "::warning::Vulnerable packages found"
+            exit 1
+          }

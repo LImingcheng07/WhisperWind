@@ -1,0 +1,28 @@
+version: 2
+updates:
+  - package-ecosystem: "nuget"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    reviewers: []
+    labels: ["dependencies"]
+    commit-message:
+      prefix: "deps"
+    groups:
+      patch:
+        applies-to: version-updates
+        update-types: ["patch"]
+      minor:
+        applies-to: version-updates
+        update-types: ["minor"]
+      major:
+        applies-to: version-updates
+        update-types: ["major"]
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    labels: ["dependencies", "ci"]
