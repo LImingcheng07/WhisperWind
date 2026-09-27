@@ -1,42 +1,43 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows.Input;
 using WhisperWind.Core;
 
 namespace WhisperWind.App.Services;
 
 /// <summary>
-/// Windows SendInput 实现：调 Windows API 输入键鼠事件到「三角洲行动」窗口。
-/// 不读内存/不注入/不驱动，纯公开 API。
+/// Windows SendInput 实现：调 user32.dll 输入键鼠事件。
+/// 不读内存/不注入/不驱动，纯公开 Win32 API。
+///
+/// 三角洲行动 8 音口琴：
+///   - 8 个主键：F1..F8（可在 Settings 改）
+///   - 升半音：鼠标侧键（XButton1）
+///   - 高八度：鼠标中键
 /// </summary>
 public sealed class WindowsNotePlayer : INotePlayer
 {
-    public bool IsTargetFocused
-    {
-        get
-        {
-            // TODO: 用 FindWindow("DeltaForce", ...) 查三角洲窗口
-            return true;
-        }
-    }
+    public bool IsTargetFocused => true; // M3 阶段加 FindWindow 检测
 
     public void Press(IReadOnlyList<GameKey> keys)
     {
-        foreach (var k in keys) PressKey(k, true);
+        var inputs = new List<INPUT>(keys.Count * 2);
+        foreach (var k in keys) inputs.Add(BuildInput(k, true));
+        SendInput((uint)inputs.Count, inputs.ToArray(), Marshal.SizeOf<INPUT>());
     }
 
     public void Release(IReadOnlyList<GameKey> keys)
     {
-        foreach (var k in keys) PressKey(k, false);
+        var inputs = new List<INPUT>(keys.Count * 2);
+        foreach (var k in keys) inputs.Add(BuildInput(k, false));
+        SendInput((uint)inputs.Count, inputs.ToArray(), Marshal.SizeOf<INPUT>());
     }
 
     public void ReleaseAll()
     {
         // 兜底：松掉所有修饰键
-        PressKey(GameKey.MouseSide, false);
-        PressKey(GameKey.MouseMiddle, false);
+        Release(new[] { GameKey.MouseSide, GameKey.MouseMiddle });
     }
 
     public ValueTask DisposeAsync() => ValueTask.CompletedTask;
@@ -59,32 +60,108 @@ public sealed class WindowsNotePlayer : INotePlayer
         }
     }
 
-    private static void PressKey(GameKey key, bool down)
+    // === P/Invoke ===
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct INPUT
     {
-        // TODO M2.5: 用 Win32 SendInput（user32.dll）替换 WPF 的 InputManager
-        // 当前 M2 阶段：只做占位（用 WPF SendKeys 替代）
-        // 未来要支持后台按键（不抢焦点），必须用 SendInput + INPUT struct
-        switch (key)
-        {
-            case GameKey.MouseSide:    // 侧键（XButton1）= 升半音
-                SimulateMouseButton(0x0001, down ? (uint)0x0001 : 0x0002, 0); // XBUTTON1 down/up
-                break;
-            case GameKey.MouseMiddle:  // 中键
-                SimulateMouseButton(0x0040, down ? 0x0001u : 0x0002u, 0); // WM_MOUSE click
-                break;
-            default:
-                // 8 个主键：MainKey1..8 → F1..F8（或自定义键位，先用 F1..F8 占位）
-                int fKey = (int)key; // MainKey1=1..MainKey8=8 → F1..F8
-                var keyCode = Key.F1 + (fKey - 1);
-                if (down) Keyboard.Focus(null);
-                // 实际 SendInput 在 M2.5 阶段补
-                break;
-        }
+        public uint type;
+        public INPUTUNION U;
     }
 
-    private static void SimulateMouseButton(uint message, uint wParam, int delta)
+    [StructLayout(LayoutKind.Explicit)]
+    private struct INPUTUNION
     {
-        // 占位：M2.5 阶段改用 SendInput INPUT_MOUSE
-        // 现阶段不发真实事件
+        [FieldOffset(0)] public MOUSEINPUT mi;
+        [FieldOffset(0)] public KEYBDINPUT ki;
+        [FieldOffset(0)] public HARDWAREINPUT hi;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct MOUSEINPUT
+    {
+        public int dx;
+        public int dy;
+        public uint mouseData;
+        public uint dwFlags;
+        public uint time;
+        public IntPtr dwExtraInfo;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct KEYBDINPUT
+    {
+        public ushort wVk;
+        public ushort wScan;
+        public uint dwFlags;
+        public uint time;
+        public IntPtr dwExtraInfo;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct HARDWAREINPUT
+    {
+        public uint uMsg;
+        public ushort wParamL;
+        public ushort wParamH;
+    }
+
+    private const uint INPUT_MOUSE = 0;
+    private const uint INPUT_KEYBOARD = 1;
+    private const uint MOUSEEVENTF_XDOWN = 0x0080;
+    private const uint MOUSEEVENTF_XUP = 0x0100;
+    private const uint MOUSEEVENTF_MIDDLEDOWN = 0x0020;
+    private const uint MOUSEEVENTF_MIDDLEUP = 0x0040;
+    private const uint KEYEVENTF_KEYUP = 0x0002;
+
+    [DllImport("user32.dll", SetLastError = true)]
+    private static extern uint SendInput(uint nInputs, INPUT[] pInputs, int cbSize);
+
+    private static INPUT BuildInput(GameKey key, bool down)
+    {
+        switch (key)
+        {
+            case GameKey.MouseSide:    // 侧键 XButton1
+                return new INPUT
+                {
+                    type = INPUT_MOUSE,
+                    U = new INPUTUNION
+                    {
+                        mi = new MOUSEINPUT
+                        {
+                            dwFlags = down ? MOUSEEVENTF_XDOWN : MOUSEEVENTF_XUP,
+                            mouseData = 0x0001, // XBUTTON1
+                        }
+                    }
+                };
+            case GameKey.MouseMiddle:  // 中键
+                return new INPUT
+                {
+                    type = INPUT_MOUSE,
+                    U = new INPUTUNION
+                    {
+                        mi = new MOUSEINPUT
+                        {
+                            dwFlags = down ? MOUSEEVENTF_MIDDLEDOWN : MOUSEEVENTF_MIDDLEUP,
+                        }
+                    }
+                };
+            default:
+                // MainKey1..8 → F1..F8
+                int fKeyIndex = (int)key; // 1..8
+                ushort vk = (ushort)(0x70 + (fKeyIndex - 1)); // VK_F1 = 0x70
+                return new INPUT
+                {
+                    type = INPUT_KEYBOARD,
+                    U = new INPUTUNION
+                    {
+                        ki = new KEYBDINPUT
+                        {
+                            wVk = vk,
+                            dwFlags = down ? 0u : KEYEVENTF_KEYUP,
+                        }
+                    }
+                };
+        }
     }
 }

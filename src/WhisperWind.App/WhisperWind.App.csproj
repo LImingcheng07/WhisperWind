@@ -4,6 +4,7 @@
     <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0-windows</TargetFramework>
     <UseWPF>true</UseWPF>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>WhisperWind.App</RootNamespace>
@@ -19,7 +20,6 @@
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.2" />
     <PackageReference Include="WPF-UI" Version="3.0.3" />
-    <PackageReference Include="H.InputSimulator" Version="1.6.0" />
   </ItemGroup>
 
 </Project>

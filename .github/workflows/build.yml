@@ -32,6 +32,19 @@ jobs:
           path: src/WhisperWind.Core.Tests/TestResults/*.trx
           if-no-files-found: ignore
 
+  audit-packages:
+    name: NuGet Vulnerability Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Restore (Linux + EnableWindowsTargeting on App)
+        run: dotnet restore
+      - name: Run vulnerability audit
+        run: dotnet list package --vulnerable --include-transitive
+
   test-app-windows:
     name: build App (windows-latest)
     runs-on: windows-latest
