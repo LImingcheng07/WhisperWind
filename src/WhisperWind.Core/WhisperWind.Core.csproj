@@ -10,4 +10,11 @@
     <PackageReference Include="Melanchall.DryWetMIDI" Version="7.2.0" />
   </ItemGroup>
 
+  <!-- DryWetMIDI 的 build targets 会带上 macOS 的 .dylib，Windows 下无用，剔除 -->
+  <Target Name="RemoveDryWetMidiMacNative" BeforeTargets="AssignTargetPaths">
+    <ItemGroup>
+      <None Remove="@(None)" Condition="'%(Extension)' == '.dylib'" />
+    </ItemGroup>
+  </Target>
+
 </Project>

@@ -1,12 +1,15 @@
 <Application x:Class="WhisperWind.App.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              xmlns:converters="clr-namespace:WhisperWind.App.Converters"
              StartupUri="Views/MainWindow.xaml">
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="pack://application:,,,/Wpf.Ui;component/Themes/Fluent/Fluent.xaml" />
+                <!-- WPF-UI 3.x 的主题/控件资源，不存在 Themes/Fluent/Fluent.xaml 这个路径 -->
+                <ui:ThemesDictionary Theme="Dark" />
+                <ui:ControlsDictionary />
             </ResourceDictionary.MergedDictionaries>
             <converters:BoolToBrushConverter x:Key="BoolToBrush"
                                              True="#7DBB6B"
