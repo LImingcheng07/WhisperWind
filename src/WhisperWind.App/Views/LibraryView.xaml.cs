@@ -29,8 +29,8 @@ public partial class LibraryView : Page
 
     private void OnImportClick(object sender, RoutedEventArgs e)
     {
-        if (App.MainVM is not null && App.MainVM.ImportMidiCommand.CanExecute(null))
-            App.MainVM.ImportMidiCommand.Execute(null);
+        if (App.MainVM is not null && App.MainVM.ImportLocalMidiCommand.CanExecute(null))
+            App.MainVM.ImportLocalMidiCommand.Execute(null);
     }
 
     private void OnSearchClick(object sender, RoutedEventArgs e)
@@ -59,8 +59,8 @@ public partial class LibraryView : Page
     {
         if (LocalList.SelectedItem is TrackMeta m && App.MainVM is not null)
         {
-            if (App.MainVM.LoadLocalTrackCommand.CanExecute(m))
-                App.MainVM.LoadLocalTrackCommand.Execute(m);
+            if (App.MainVM.LoadTrackCommand.CanExecute(m))
+                App.MainVM.LoadTrackCommand.Execute(m);
         }
     }
 
