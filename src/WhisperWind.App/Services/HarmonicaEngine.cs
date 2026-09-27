@@ -55,7 +55,8 @@ public sealed class HarmonicaEngine : IAsyncDisposable
             var song = await Task.Run(() => MidiSong.Load(midiPath), ct);
             // 选音符最多的 track（通常是主旋律）
             var mainTrack = song.Tracks.OrderByDescending(t => t.NoteCount).First();
-            _plan = await Task.Run(() => HarmonicaConverter.Convert(midiPath, mainTrack.Index, song.GetTrackNotes(mainTrack.Index)), ct);
+            var notes = song.GetTrackNotes(mainTrack.Index);
+            _plan = await Task.Run(() => new HarmonicaConverter(new HarmonicaMapping()).Convert(midiPath, mainTrack.Index, notes), ct);
             SetState(State.Ready);
         }
         catch (OperationCanceledException) { }
