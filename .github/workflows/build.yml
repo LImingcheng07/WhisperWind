@@ -29,13 +29,12 @@ jobs:
         run: dotnet build --no-restore --configuration Release
 
       - name: Test
-        run: dotnet test --no-build --no-restore --configuration Release --verbosity normal
+        run: dotnet test --no-build --no-restore --configuration Release --verbosity normal --logger "trx;LogFileName=TestResults.trx"
 
-      - name: Test results (Linux)
-        if: matrix.os == 'ubuntu-latest'
-        uses: dorny/test-reporter@v1
+      - name: Upload test results
+        if: matrix.os == 'ubuntu-latest' && always()
+        uses: actions/upload-artifact@v4
         with:
-          name: Tests
+          name: test-results-${{ matrix.os }}
           path: tests/*/TestResults/*.trx
-          reporter: dotnet-trx
-        if: always()
+          if-no-files-found: ignore
