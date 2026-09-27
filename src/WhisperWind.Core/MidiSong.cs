@@ -45,6 +45,10 @@ public sealed class MidiSong
         _notesByTrack = notesByTrack;
     }
 
+    /// <summary>所有 track 的全部音符（按 StartMs 排序）</summary>
+    public IReadOnlyList<MidiNote> AllNotes =>
+        _notesByTrack.SelectMany(kv => kv.Value).OrderBy(n => n.StartMs).ToList();
+
     /// <summary>从 .mid/.midi 文件解析</summary>
     public static MidiSong Load(string filePath)
     {

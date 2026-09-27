@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using Melanchall.DryWetMidi.Common;
 using Melanchall.DryWetMidi.Core;
-using Melanchall.DryWetMidi.Interaction;
 
 namespace WhisperWind.App.BuiltIn;
 
@@ -56,28 +56,39 @@ public static class BuiltInTracks
     private static void WriteMidi(string path, int[] melody)
     {
         const int bpm = 120;
-        const long ticksPerNote = 480; // 4 分音符 @ 480 PPQ
-        var ticksPerQuarter = 480;
+        // PPQ=480, 每 4 分音符 480 ticks
+        const long ticksPerNote = 480;
 
-        // 用低层 API：MidiFile + TrackChunk + NoteOnEvent/NoteOffEvent
-        var tempoMap = TempoMap.Create(new Tempo(bpm * 10000));
-        var midiFile = new MidiFile(ticksPerQuarter);
-
-        // tick track（必须有 tempo + time signature）
-        var tickTrack = midiFile.CreateTickTrackChunk(TempoMap.Create(new Tempo(bpm * 10000)));
-        midiFile.Chunks.Add(tickTrack);
-
-        var trackChunk = new TrackChunk();
-        foreach (var noteNumber in melody)
+        var midiFile = new MidiFile
         {
-            var note = (SevenBitNumber)noteNumber;
-            trackChunk.Events.Add(new NoteOnEvent(note, (SevenBitNumber)100));
-            trackChunk.Events.Add(new NoteOffEvent(note, (SevenBitNumber)100)
+            TimeDivision = new TicksPerQuarterNoteTimeDivision(480),
+        };
+
+        // 1) tempo track (MThd + 第一轨有 tempo 事件)
+        var tempoTrack = new TrackChunk();
+        tempoTrack.Events.Add(new SetTempoEvent(bpm * 10000));
+        tempoTrack.Events.Add(new TimeSignatureEvent(4, 4));
+        midiFile.Chunks.Add(tempoTrack);
+
+        // 2) 旋律 track
+        var track = new TrackChunk();
+        long delta = 0; // 第一个事件 DeltaTime=0
+        for (int i = 0; i < melody.Length; i++)
+        {
+            var n = (SevenBitNumber)melody[i];
+            if (i == 0)
             {
-                DeltaTime = ticksPerNote,
-            });
+                // 第一个 note 的 NoteOn 走 delta=0；NoteOff 走 ticksPerNote
+                track.Events.Add(new NoteOnEvent { DeltaTime = 0, NoteNumber = n, Velocity = (SevenBitNumber)100 });
+                track.Events.Add(new NoteOffEvent { DeltaTime = ticksPerNote, NoteNumber = n, Velocity = (SevenBitNumber)0 });
+            }
+            else
+            {
+                track.Events.Add(new NoteOnEvent { DeltaTime = 0, NoteNumber = n, Velocity = (SevenBitNumber)100 });
+                track.Events.Add(new NoteOffEvent { DeltaTime = ticksPerNote, NoteNumber = n, Velocity = (SevenBitNumber)0 });
+            }
         }
-        midiFile.Chunks.Add(trackChunk);
+        midiFile.Chunks.Add(track);
 
         midiFile.Write(path);
     }

@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using WhisperWind.Core;
@@ -52,7 +53,9 @@ public sealed class HarmonicaEngine : IAsyncDisposable
 
             // 解析 → 转换 → 编译计划
             var song = await Task.Run(() => MidiSong.Load(midiPath), ct);
-            _plan = await Task.Run(() => HarmonicaConverter.Convert(song), ct);
+            // 选音符最多的 track（通常是主旋律）
+            var mainTrack = song.Tracks.OrderByDescending(t => t.NoteCount).First();
+            _plan = await Task.Run(() => HarmonicaConverter.Convert(midiPath, mainTrack.Index, song.GetTrackNotes(mainTrack.Index)), ct);
             SetState(State.Ready);
         }
         catch (OperationCanceledException) { }
