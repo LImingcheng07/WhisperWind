@@ -6,6 +6,8 @@ using Melanchall.DryWetMidi.Interaction;
 
 namespace WhisperWind.App.BuiltIn;
 
+public sealed record TrackMeta(string Name, string FileName);
+
 /// <summary>
 /// 生成 4 首预置曲的 MIDI 文件到 %AppData%/WhisperWind/tracks/。
 /// 第一次启动时若目录为空则全部生成。
@@ -15,8 +17,6 @@ namespace WhisperWind.App.BuiltIn;
 /// </summary>
 public static class BuiltInTracks
 {
-    public sealed record TrackMeta(string Name, string FileName);
-
     private static readonly List<(string name, string file, int[] melody)> _tracks = new()
     {
         ("鸟之诗 · Air", "air.mid", new[] {

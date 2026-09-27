@@ -12,7 +12,7 @@ namespace WhisperWind.App.Services;
 /// </summary>
 public sealed class GlobalHotkeyService : IDisposable
 {
-    public enum Action
+    public enum HotkeyAction
     {
         PlayToggle,    // F8
         PauseResume,   // F9
