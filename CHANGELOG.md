@@ -7,13 +7,26 @@
 
 ## [Unreleased]
 
-### 计划
+## [M2~M5] - 2026-09-27
 
-- M2: WPF 三页骨架 + Fluent 2 主题
-- M3: 卷帘窗编辑器 + 3D 全息口琴
-- M4: 知音 AI
-- M5: 语音控制 + NPC 数字码
-- M6: 打包发布 + 4 首内置曲
+### 新增
+
+- 🖼 **WPF 4 页 + 国风 UI**（NavigationView v3 / 宣纸+朱砂+古铜金色 / Microsoft YaHei）
+- ⌨ **目标窗口监测** —— FindWindow('Delta Force'/'三角洲行动') + GetForegroundWindow
+- 🔥 **全局热键 F8/F9/F10** —— RegisterHotKey（演奏/暂停/急停）
+- 🎹 **SendInput P/Invoke 引擎** —— 原生 user32.dll 鼠标 + 键盘
+- 🎵 **4 首内置 MIDI**（自动生成到 %AppData%）
+- 📂 **用户导入 MIDI**（OpenFileDialog + 复制到 user library）
+- 🌐 **在线曲库 BitMidi.com** —— 15000+ 流行/动漫/影视/古典，搜索 + 翻页 + 下载
+- 🤖 **AI 知音** —— Anthropic Claude / OpenAI / OpenAI 兼容（含 OpenRouter / DeepSeek / Ollama / 中转）
+- ⚙ **Settings 持久化** —— %AppData%/WhisperWind/settings.json（API Key 只存本地）
+- 📦 **自包含发布 workflow** —— `git tag v*` 自动出 Release zip
+
+### CI
+
+- 3 job 拆分：Core 测试 (Linux) / NuGet 漏洞扫描 / WPF 编译 (Windows)
+- 6 个 workflow：build / codeql / release-drafter / dependabot / publish
+- 全部 3 job 绿色 + CodeQL 绿色 + Release Drafter 自动出 note
 
 ## [M1] - 2026-09-26
 

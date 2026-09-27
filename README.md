@@ -28,14 +28,21 @@
 
 ## 📥 下载
 
-> ⚠️ **当前 M1 阶段仅交付纯逻辑库 + 30 单元测试**。
-> WPF UI / SendInput 引擎在 M2+。**想要 GUI 工具请等待 M2 Release**。
+> ✅ **M5 完整版本** — WPF UI / SendInput 引擎 / 在线曲库 (BitMidi) / AI 知音 (Claude + OpenAI)
+
+### Release 下载（推荐）
+
+去 [Releases 页](https://github.com/LImingcheng07/WhisperWind/releases) 下载最新 zip：
+
+- `WhisperWind-v*.*.*-win-x64.zip` —— 自包含单 exe (~150 MB)，解压即用，**无需装 .NET**
+
+### 从源码编译
 
 ```bash
-# 编译 Core 库
 git clone https://github.com/LImingcheng07/WhisperWind.git
 cd WhisperWind
-dotnet test    # 跑通 30 单元测试
+dotnet test                         # Core 库 30 单元测试
+dotnet build src/WhisperWind.App    # WPF App (需 Windows)
 ```
 
 ---
