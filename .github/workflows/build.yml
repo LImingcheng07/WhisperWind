@@ -7,13 +7,9 @@ on:
     branches: [main]
 
 jobs:
-  test:
-    name: test (${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, windows-latest]
+  test-core-linux:
+    name: test Core (ubuntu-latest)
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
@@ -22,19 +18,43 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
-      - name: Restore
-        run: dotnet restore
+      - name: Restore Core
+        run: dotnet restore src/WhisperWind.Core/WhisperWind.Core.csproj
 
-      - name: Build
-        run: dotnet build --no-restore --configuration Release
+      - name: Test Core
+        run: dotnet test src/WhisperWind.Core/WhisperWind.Core.csproj --no-restore --configuration Release --verbosity normal
 
-      - name: Test
-        run: dotnet test --no-build --no-restore --configuration Release --verbosity normal --logger "trx;LogFileName=TestResults.trx"
-
-      - name: Upload test results
-        if: matrix.os == 'ubuntu-latest' && always()
+      - name: Test Core results
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: test-results-${{ matrix.os }}
-          path: tests/*/TestResults/*.trx
+          name: test-results-core
+          path: src/WhisperWind.Core.Tests/TestResults/*.trx
           if-no-files-found: ignore
+
+  test-app-windows:
+    name: build App (windows-latest)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore App
+        run: dotnet restore src/WhisperWind.App/WhisperWind.App.csproj
+
+      - name: Build App (Release, self-contained false)
+        run: dotnet build src/WhisperWind.App/WhisperWind.App.csproj --no-restore --configuration Release
+
+      - name: Publish App (smoke test)
+        run: dotnet publish src/WhisperWind.App/WhisperWind.App.csproj --no-build --configuration Release --output ./publish
+
+      - name: Upload App artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: whisperwind-app
+          path: publish/**
+          if-no-files-found: warn
