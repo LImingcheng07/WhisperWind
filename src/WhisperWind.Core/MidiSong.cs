@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Melanchall.DryWetMidi.Common;
 using Melanchall.DryWetMidi.Core;
 using Melanchall.DryWetMidi.Interaction;
 
@@ -14,15 +13,23 @@ public readonly record struct MidiNote(
     int Channel,
     int TrackIndex);
 
-/// <summary>一条 MIDI 轨道摘要</summary>
+/// <summary>一条 MIDI 轨道摘要（按"轨道块 × 通道"拆分，format 0 文件也能分出各声部）</summary>
 public sealed class MidiTrackInfo
 {
     public int Index { get; init; }
     public string Name { get; init; } = "";
+    public int Channel { get; init; }
     public int NoteCount { get; init; }
     public int MinPitch { get; init; }
     public int MaxPitch { get; init; }
     public long DurationMs { get; init; }
+    /// <summary>GM 第 10 通道 = 打击乐，不能当旋律</summary>
+    public bool IsDrum => Channel == 9;
+
+    public string DisplayName =>
+        $"{Name}{(IsDrum ? " · 鼓" : "")} · {NoteCount} 音";
+
+    public override string ToString() => DisplayName;
 }
 
 /// <summary>一首 MIDI 曲子的解析结果</summary>
@@ -30,17 +37,20 @@ public sealed class MidiSong
 {
     public string FilePath { get; }
     public long DurationMs { get; }
+    /// <summary>开头的速度（BPM），没有 tempo 事件时为 120</summary>
+    public double Bpm { get; }
     public IReadOnlyList<MidiTrackInfo> Tracks { get; }
     public IReadOnlyList<MidiNote> GetTrackNotes(int trackIndex) => _notesByTrack[trackIndex];
 
     private readonly Dictionary<int, List<MidiNote>> _notesByTrack;
 
-    private MidiSong(string filePath, long durationMs,
+    private MidiSong(string filePath, long durationMs, double bpm,
         IReadOnlyList<MidiTrackInfo> tracks,
         Dictionary<int, List<MidiNote>> notesByTrack)
     {
         FilePath = filePath;
         DurationMs = durationMs;
+        Bpm = bpm;
         Tracks = tracks;
         _notesByTrack = notesByTrack;
     }
@@ -55,39 +65,59 @@ public sealed class MidiSong
         if (!File.Exists(filePath))
             throw new FileNotFoundException(filePath);
 
-        var midi = MidiFile.Read(filePath);
+        var midi = MidiFile.Read(filePath, new ReadingSettings
+        {
+            // 网上的 MIDI 常有小毛病，尽量宽容
+            InvalidChunkSizePolicy = InvalidChunkSizePolicy.Ignore,
+            NotEnoughBytesPolicy = NotEnoughBytesPolicy.Ignore,
+            NoHeaderChunkPolicy = NoHeaderChunkPolicy.Ignore,
+            InvalidChannelEventParameterValuePolicy = InvalidChannelEventParameterValuePolicy.SnapToLimits,
+            InvalidMetaEventParameterValuePolicy = InvalidMetaEventParameterValuePolicy.SnapToLimits,
+            MissedEndOfTrackPolicy = MissedEndOfTrackPolicy.Ignore,
+            UnexpectedTrackChunksCountPolicy = UnexpectedTrackChunksCountPolicy.Ignore,
+            ExtraTrackChunkPolicy = ExtraTrackChunkPolicy.Read,
+            UnknownChunkIdPolicy = UnknownChunkIdPolicy.ReadAsUnknownChunk,
+        });
         var tempoMap = midi.GetTempoMap();
+        double bpm = tempoMap.GetTempoAtTime(new MidiTimeSpan(0)).BeatsPerMinute;
 
         var tracks = new List<MidiTrackInfo>();
         var notesByTrack = new Dictionary<int, List<MidiNote>>();
-        long totalMs = midi.GetTimedEvents().LastOrDefault()?.Time ?? 0;
+        long totalMs = 0;
 
-        for (int i = 0; i < midi.GetTrackChunks().Count(); i++)
+        var chunks = midi.GetTrackChunks().ToList();
+        int index = 0;
+        for (int i = 0; i < chunks.Count; i++)
         {
-            var chunk = midi.GetTrackChunks().ElementAt(i);
-            var notes = chunk.GetNotes().ToList();
-            if (notes.Count == 0) continue;
+            var chunk = chunks[i];
+            var trackName = chunk.Events.OfType<SequenceTrackNameEvent>().FirstOrDefault()?.Text?.Trim();
 
-            var noteRecords = notes.Select(n => new MidiNote(
-                Pitch: n.NoteNumber,
-                StartMs: (long)n.TimeAs<MetricTimeSpan>(tempoMap).TotalMilliseconds,
-                EndMs: (long)n.EndTimeAs<MetricTimeSpan>(tempoMap).TotalMilliseconds,
-                Channel: n.Channel,
-                TrackIndex: i)).ToList();
-
-            tracks.Add(new MidiTrackInfo
+            foreach (var byChannel in chunk.GetNotes().GroupBy(n => (int)n.Channel).OrderBy(g => g.Key))
             {
-                Index = i,
-                Name = $"Track {i}",
-                NoteCount = notes.Count,
-                MinPitch = notes.Min(n => n.NoteNumber),
-                MaxPitch = notes.Max(n => n.NoteNumber),
-                DurationMs = (long)notes.Max(n => n.EndTimeAs<MetricTimeSpan>(tempoMap).TotalMilliseconds),
-            });
+                var noteRecords = byChannel.Select(n => new MidiNote(
+                    Pitch: n.NoteNumber,
+                    StartMs: (long)n.TimeAs<MetricTimeSpan>(tempoMap).TotalMilliseconds,
+                    EndMs: (long)n.EndTimeAs<MetricTimeSpan>(tempoMap).TotalMilliseconds,
+                    Channel: byChannel.Key,
+                    TrackIndex: index)).OrderBy(n => n.StartMs).ToList();
 
-            notesByTrack[i] = noteRecords;
+                var name = string.IsNullOrEmpty(trackName) ? $"轨 {i + 1}" : trackName;
+                tracks.Add(new MidiTrackInfo
+                {
+                    Index = index,
+                    Name = $"{name} / 通道 {byChannel.Key + 1}",
+                    Channel = byChannel.Key,
+                    NoteCount = noteRecords.Count,
+                    MinPitch = noteRecords.Min(n => n.Pitch),
+                    MaxPitch = noteRecords.Max(n => n.Pitch),
+                    DurationMs = noteRecords.Max(n => n.EndMs),
+                });
+                totalMs = System.Math.Max(totalMs, noteRecords.Max(n => n.EndMs));
+                notesByTrack[index] = noteRecords;
+                index++;
+            }
         }
 
-        return new MidiSong(filePath, totalMs, tracks, notesByTrack);
+        return new MidiSong(filePath, totalMs, bpm, tracks, notesByTrack);
     }
 }

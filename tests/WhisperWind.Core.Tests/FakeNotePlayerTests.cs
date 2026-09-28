@@ -21,8 +21,10 @@ public class FakeNotePlayerTests
         });
         var player = new FakeNotePlayer();
         await player.RunAsync(plan, speed: 10, CancellationToken.None);
-        // 3 notes × (press + release) = 6
-        Assert.That(player.Log.Count, Is.EqualTo(6));
+        // 3 notes × (press + release)，结束时再兜底 RELEASE_ALL 一次
+        Assert.That(player.Log.Count(l => l.action == "PRESS"), Is.EqualTo(3));
+        Assert.That(player.Log.Count(l => l.action == "RELEASE"), Is.EqualTo(3));
+        Assert.That(player.Log[^1].action, Is.EqualTo("RELEASE_ALL"));
         // 第 0/2/4 是 press，1/3/5 是 release
         Assert.That(player.Log[0].action, Is.EqualTo("PRESS"));
         Assert.That(player.Log[1].action, Is.EqualTo("RELEASE"));

@@ -48,7 +48,7 @@ public class EdgeCaseTests
     public void Mapping_Min_Max_Pitch_Are_Correct()
     {
         var m = new HarmonicaMapping();
-        Assert.That(m.MinPitch, Is.EqualTo(60));
+        Assert.That(m.MinPitch, Is.EqualTo(48));
         Assert.That(m.MaxPitch, Is.EqualTo(84));
     }
 
@@ -57,7 +57,7 @@ public class EdgeCaseTests
     {
         var m = new HarmonicaMapping();
         var c = new HarmonicaConverter(m);
-        // C3 = 48 → 48<60 → 48+12=60 (C4, 在映射)
+        // C3 = 48 → 第 1 孔 + 降调（左键）
         var plan = c.Convert("x.mid", 0, Notes((48, 0, 200)));
         Assert.That(plan.Events.Count, Is.EqualTo(1));
         Assert.That(plan.Events[0].Keys[0], Is.EqualTo(GameKey.MainKey1));
@@ -66,12 +66,12 @@ public class EdgeCaseTests
     [Test]
     public void Half_Tone_Black_Key_Snaps_To_Nearest()
     {
-        // D#4 = 63 应映射到 MainKey2 + MouseSide（默认 sharps 已含）
+        // D#4 = 63 应映射到 MainKey2 + Sharp（默认 sharps 已含）
         var m = new HarmonicaMapping();
         var c = new HarmonicaConverter(m);
         var plan = c.Convert("x.mid", 0, Notes((63, 0, 200)));
         Assert.That(plan.Events.Count, Is.EqualTo(1));
-        Assert.That(plan.Events[0].Keys, Contains.Item(GameKey.MouseSide));
+        Assert.That(plan.Events[0].Keys, Contains.Item(GameKey.Sharp));
     }
 
     [Test]
@@ -111,11 +111,15 @@ public class EdgeCaseTests
     }
 
     [Test]
-    public void IsValid_False_When_Errors()
+    public void IsValid_False_When_Nothing_Playable()
     {
-        var m = new HarmonicaMapping();
-        var c = new HarmonicaConverter(m);
-        var plan = c.Convert("x.mid", 0, Notes((60, 0, 200), (72, 0, 200))); // 冲突
+        var sparse = new HarmonicaMapping(new Dictionary<int, IReadOnlyList<GameKey>>
+        {
+            [60] = new[] { GameKey.MainKey1 },
+        });
+        var c = new HarmonicaConverter(sparse);
+        var plan = c.Convert("x.mid", 0, Notes((65, 0, 200)));
+        Assert.That(plan.Errors, Is.Not.Empty);
         Assert.That(plan.IsValid, Is.False);
     }
 

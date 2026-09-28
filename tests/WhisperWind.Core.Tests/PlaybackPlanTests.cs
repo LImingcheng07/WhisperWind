@@ -29,29 +29,29 @@ public class PlaybackPlanTests
     }
 
     [Test]
-    public void Sharps_Get_Mouse_Side()
+    public void Sharps_Get_Sharp()
     {
         var m = new HarmonicaMapping();
         var c = new HarmonicaConverter(m);
-        // C#4 = 61 → MainKey2 + MouseSide
+        // C#4 = 61 → MainKey2 + Sharp
         var plan = c.Convert("x.mid", 0, Notes((61, 0, 200)));
         Assert.That(plan.Events.Count, Is.EqualTo(1));
-        Assert.That(plan.Events[0].Keys, Contains.Item(GameKey.MouseSide));
+        Assert.That(plan.Events[0].Keys, Contains.Item(GameKey.Sharp));
     }
 
     [Test]
-    public void Octave_Up_Notes_Get_Mouse_Middle()
+    public void Octave_Up_Notes_Get_OctaveUp()
     {
         var m = new HarmonicaMapping();
         var c = new HarmonicaConverter(m);
-        // C5 = 72 → MainKey1 + MouseMiddle
-        var plan = c.Convert("x.mid", 0, Notes((72, 0, 200)));
+        // D5 = 74 → MainKey2 + OctaveUp
+        var plan = c.Convert("x.mid", 0, Notes((74, 0, 200)));
         Assert.That(plan.Events.Count, Is.EqualTo(1));
-        Assert.That(plan.Events[0].Keys, Contains.Item(GameKey.MouseMiddle));
+        Assert.That(plan.Events[0].Keys, Contains.Item(GameKey.OctaveUp));
     }
 
     [Test]
-    public void Two_Simultaneous_Notes_Trigger_Conflict()
+    public void Chord_Is_Reduced_To_Top_Note()
     {
         var m = new HarmonicaMapping();
         var c = new HarmonicaConverter(m);
@@ -63,8 +63,12 @@ public class PlaybackPlanTests
         // 算了，用两个 sharps 共享主键不冲突，用 empty moment 测试
         // 改测 60 (MainKey1) @ 0 + 84 (MainKey8 + Middle) @ 0：不同主键，OK
         // 真正冲突只有同 ms 同主键的两种 binding：例如 60 @ 0 + 72 @ 0 → MainKey1 都用 → 冲突
-        var plan = c.Convert("x.mid", 0, Notes((60, 0, 200), (72, 0, 200)));
-        Assert.That(plan.Errors.Any(e => e.Contains("Conflict")), Is.True);
+        // 单音乐器：同一时刻的和弦只保留最高音（旋律），整首仍然可播
+        var plan = c.Convert("x.mid", 0, Notes((60, 0, 200), (64, 0, 200), (67, 0, 200)));
+        Assert.That(plan.IsValid, Is.True);
+        Assert.That(plan.Events.Count, Is.EqualTo(1));
+        Assert.That(plan.Events[0].Pitch, Is.EqualTo(67));
+        Assert.That(plan.ChordReducedCount, Is.EqualTo(2));
     }
 
     [Test]

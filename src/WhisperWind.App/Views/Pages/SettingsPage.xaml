@@ -1,0 +1,203 @@
+<UserControl x:Class="WhisperWind.App.Views.Pages.SettingsPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:c="clr-namespace:WhisperWind.App.Controls"
+             Focusable="True">
+    <UserControl.Resources>
+        <Style x:Key="Label" TargetType="TextBlock" BasedOn="{StaticResource Body}">
+            <Setter Property="Width" Value="130" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style x:Key="Row" TargetType="DockPanel">
+            <Setter Property="Margin" Value="0,0,0,12" />
+        </Style>
+    </UserControl.Resources>
+    <Grid Margin="0,4,0,0">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+                <!-- 键位 -->
+                <Border Style="{StaticResource Card}" Padding="24,20">
+                    <StackPanel>
+                        <DockPanel Margin="0,0,0,4">
+                            <Button DockPanel.Dock="Right" Style="{StaticResource Ghost}" Content="恢复默认 (Z X C V B N M , / 左中右键)" VerticalAlignment="Center"
+                                    Command="{Binding ResetKeysCommand}" />
+                            <TextBlock Text="设置" Style="{StaticResource PageTitle}" />
+                        </DockPanel>
+                        <ContentControl Style="{StaticResource Section}" Content="口琴键位" Margin="0,8,0,6" />
+                        <TextBlock Style="{StaticResource Muted}" Margin="0,0,0,12"
+                                   Text="和游戏里的口琴键位保持一致。点一个键位，然后按下新键（Esc 取消；和其他孔重复时会自动交换）。" />
+                        <ItemsControl ItemsSource="{Binding KeySlots}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <UniformGrid Columns="8" />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Margin="0,0,8,0">
+                                        <TextBlock Text="{Binding Degree}" Style="{StaticResource Caps}" HorizontalAlignment="Center" Margin="0,0,0,4" />
+                                        <Button x:Name="Slot" Height="46" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Cursor="Hand"
+                                                Command="{Binding DataContext.BeginCaptureCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                CommandParameter="{Binding}" Click="OnSlotClick">
+                                            <Button.Template>
+                                                <ControlTemplate TargetType="Button">
+                                                    <Border x:Name="Bd" Background="#FFFDF8" BorderBrush="#D9CCB0" BorderThickness="1,1,1,3" CornerRadius="8">
+                                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                    </Border>
+                                                    <ControlTemplate.Triggers>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource CardHoverBrush}" />
+                                                        </Trigger>
+                                                        <DataTrigger Binding="{Binding IsCapturing}" Value="True">
+                                                            <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource SealBrush}" />
+                                                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource SealSoftBrush}" />
+                                                        </DataTrigger>
+                                                    </ControlTemplate.Triggers>
+                                                </ControlTemplate>
+                                            </Button.Template>
+                                            <Grid>
+                                                <TextBlock Text="{Binding Display}" FontFamily="{StaticResource LatinFont}" FontSize="18" Foreground="{StaticResource InkBrush}"
+                                                           Visibility="{Binding IsCapturing, Converter={StaticResource InverseVisible}}" />
+                                                <TextBlock Text="按键…" FontSize="12" Foreground="{StaticResource SealBrush}"
+                                                           Visibility="{Binding IsCapturing, Converter={StaticResource BoolToVisible}}" />
+                                            </Grid>
+                                        </Button>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <DockPanel Style="{StaticResource Row}" Margin="0,16,0,12">
+                            <TextBlock Text="降调 低八度" Style="{StaticResource Label}" />
+                            <ComboBox Width="220" HorizontalAlignment="Left" ItemsSource="{Binding ModifierOptions}" DisplayMemberPath="Label"
+                                      SelectedValuePath="Value" SelectedValue="{Binding OctaveDownModifier}" />
+                            <TextBlock Text="游戏默认：鼠标左键" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="12,0,0,0" />
+                        </DockPanel>
+                        <DockPanel Style="{StaticResource Row}">
+                            <TextBlock Text="半音 ♯" Style="{StaticResource Label}" />
+                            <ComboBox Width="220" HorizontalAlignment="Left" ItemsSource="{Binding ModifierOptions}" DisplayMemberPath="Label"
+                                      SelectedValuePath="Value" SelectedValue="{Binding SharpModifier}" />
+                            <TextBlock Text="游戏默认：鼠标中键" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="12,0,0,0" />
+                        </DockPanel>
+                        <DockPanel Style="{StaticResource Row}">
+                            <TextBlock Text="升调 高八度" Style="{StaticResource Label}" />
+                            <ComboBox Width="220" HorizontalAlignment="Left" ItemsSource="{Binding ModifierOptions}" DisplayMemberPath="Label"
+                                      SelectedValuePath="Value" SelectedValue="{Binding OctaveModifier}" />
+                            <TextBlock Text="游戏默认：鼠标右键" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="12,0,0,0" />
+                        </DockPanel>
+                        <DockPanel Style="{StaticResource Row}">
+                            <TextBlock Text="修饰键提前量" Style="{StaticResource Label}" />
+                            <TextBlock DockPanel.Dock="Right" Style="{StaticResource Caps}" Width="60" VerticalAlignment="Center">
+                                <Run Text="{Binding ModifierLeadMs, Mode=OneWay}" /><Run Text=" ms" />
+                            </TextBlock>
+                            <Slider Style="{StaticResource PaperSlider}" Minimum="0" Maximum="60" TickFrequency="1" IsSnapToTickEnabled="True"
+                                    Value="{Binding ModifierLeadMs}" MaxWidth="360" HorizontalAlignment="Left" Width="360"
+                                    ToolTip="降调/半音/升调的修饰键先按下多久再按主键。游戏漏识别时调大" />
+                        </DockPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- 演奏 -->
+                <Border Style="{StaticResource Card}" Padding="24,20" Margin="0,14,0,0">
+                    <StackPanel>
+                        <ContentControl Style="{StaticResource Section}" Content="演奏" />
+                        <DockPanel Style="{StaticResource Row}">
+                            <TextBlock Text="最短音间隔" Style="{StaticResource Label}" />
+                            <TextBlock DockPanel.Dock="Right" Style="{StaticResource Caps}" Width="60" VerticalAlignment="Center">
+                                <Run Text="{Binding MinNoteGapMs, Mode=OneWay}" /><Run Text=" ms" />
+                            </TextBlock>
+                            <Slider Style="{StaticResource PaperSlider}" Minimum="0" Maximum="200" TickFrequency="5" IsSnapToTickEnabled="True"
+                                    Value="{Binding MinNoteGapMs}" Width="360" HorizontalAlignment="Left" ToolTip="比这更密的音会被跳过，游戏跟不上时调大" />
+                        </DockPanel>
+                        <DockPanel Style="{StaticResource Row}">
+                            <TextBlock Text="松指间隙" Style="{StaticResource Label}" />
+                            <TextBlock DockPanel.Dock="Right" Style="{StaticResource Caps}" Width="60" VerticalAlignment="Center">
+                                <Run Text="{Binding ReleaseGapMs, Mode=OneWay}" /><Run Text=" ms" />
+                            </TextBlock>
+                            <Slider Style="{StaticResource PaperSlider}" Minimum="0" Maximum="100" TickFrequency="5" IsSnapToTickEnabled="True"
+                                    Value="{Binding ReleaseGapMs}" Width="360" HorizontalAlignment="Left" ToolTip="同一个键连续吹两次时，中间先松开多久" />
+                        </DockPanel>
+                        <DockPanel Style="{StaticResource Row}">
+                            <TextBlock Text="游戏窗口关键词" Style="{StaticResource Label}" />
+                            <TextBox Style="{StaticResource PaperTextBox}" Tag="用分号分隔" Text="{Binding GameWindowKeywords, UpdateSourceTrigger=PropertyChanged}" />
+                        </DockPanel>
+                        <CheckBox Style="{StaticResource PaperCheck}" Content="只在游戏窗口在前台时发送按键（切出去自动暂停，推荐）"
+                                  IsChecked="{Binding RequireGameFocus}" Margin="0,0,0,10" />
+                        <DockPanel Style="{StaticResource Row}">
+                            <TextBlock Text="试听音色" Style="{StaticResource Label}" />
+                            <ComboBox Width="220" HorizontalAlignment="Left" ItemsSource="{Binding PreviewPrograms}" DisplayMemberPath="Label"
+                                      SelectedValuePath="Value" SelectedValue="{Binding PreviewProgram}" />
+                        </DockPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- 悬浮窗 -->
+                <Border Style="{StaticResource Card}" Padding="24,20" Margin="0,14,0,0">
+                    <StackPanel>
+                        <ContentControl Style="{StaticResource Section}" Content="游戏内悬浮窗" />
+                        <CheckBox Style="{StaticResource PaperCheck}" Content="检测到游戏在前台时自动显示悬浮窗" IsChecked="{Binding OverlayAutoShow}" Margin="0,0,0,12" />
+                        <DockPanel Style="{StaticResource Row}">
+                            <TextBlock Text="不透明度" Style="{StaticResource Label}" />
+                            <TextBlock DockPanel.Dock="Right" Style="{StaticResource Caps}" Width="60" VerticalAlignment="Center"
+                                       Text="{Binding OverlayOpacity, StringFormat={}{0:P0}}" />
+                            <Slider Style="{StaticResource PaperSlider}" Minimum="0.4" Maximum="1" SmallChange="0.05" LargeChange="0.1"
+                                    Value="{Binding OverlayOpacity}" Width="360" HorizontalAlignment="Left" />
+                        </DockPanel>
+                        <TextBlock Style="{StaticResource Muted}"
+                                   Text="悬浮窗不会抢游戏焦点。游戏需设为「无边框窗口」或「窗口化」才能看到悬浮窗；独占全屏下请用 F7 / F8 / F9 热键。" />
+                    </StackPanel>
+                </Border>
+
+                <!-- 在线 + AI -->
+                <Border Style="{StaticResource Card}" Padding="24,20" Margin="0,14,0,14">
+                    <StackPanel>
+                        <ContentControl Style="{StaticResource Section}" Content="在线曲库与 AI" />
+                        <DockPanel Style="{StaticResource Row}">
+                            <TextBlock Text="自定义曲库索引" Style="{StaticResource Label}" />
+                            <TextBox Style="{StaticResource PaperTextBox}" Tag="留空 = BitMidi；也可填一个 JSON 索引地址"
+                                     Text="{Binding CustomIndexUrl, UpdateSourceTrigger=PropertyChanged}" />
+                        </DockPanel>
+                        <DockPanel Style="{StaticResource Row}">
+                            <TextBlock Text="AI 服务" Style="{StaticResource Label}" />
+                            <ComboBox Width="260" HorizontalAlignment="Left" ItemsSource="{Binding AiProviders}" DisplayMemberPath="Label"
+                                      SelectedValuePath="Value" SelectedValue="{Binding AiProvider}" />
+                        </DockPanel>
+                        <DockPanel Style="{StaticResource Row}">
+                            <TextBlock Text="API Key" Style="{StaticResource Label}" />
+                            <TextBox Style="{StaticResource PaperTextBox}" Tag="只保存在本机 %AppData%\WhisperWind" Text="{Binding AiApiKey, UpdateSourceTrigger=PropertyChanged}" />
+                        </DockPanel>
+                        <DockPanel Style="{StaticResource Row}">
+                            <TextBlock Text="模型" Style="{StaticResource Label}" />
+                            <TextBox Style="{StaticResource PaperTextBox}" Text="{Binding AiModel, UpdateSourceTrigger=PropertyChanged}" />
+                        </DockPanel>
+                        <DockPanel Style="{StaticResource Row}"
+                                   Visibility="{Binding AiProvider, Converter={StaticResource EqualsToVisible}, ConverterParameter=custom}">
+                            <TextBlock Text="接口地址" Style="{StaticResource Label}" />
+                            <TextBox Style="{StaticResource PaperTextBox}" Text="{Binding AiEndpoint, UpdateSourceTrigger=PropertyChanged}" />
+                        </DockPanel>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- 保存条 -->
+        <Border Grid.Row="1" Style="{StaticResource Card}" Padding="18,10" Margin="0,0,0,0">
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                    <Button Style="{StaticResource Pill}" Content="撤销" Margin="0,0,8,0" Command="{Binding RevertSettingsCommand}" />
+                    <Button Style="{StaticResource AccentPill}" c:Ex.Icon="&#xE74E;" Content="保存并应用" Command="{Binding SaveSettingsCommand}" />
+                </StackPanel>
+                <Grid VerticalAlignment="Center">
+                    <TextBlock Text="{Binding BindingError}" Foreground="{StaticResource SealBrush}" Style="{StaticResource Body}"
+                               Visibility="{Binding BindingError, Converter={StaticResource EmptyToCollapsed}}" />
+                    <TextBlock Style="{StaticResource Muted}" Text="有未保存的修改"
+                               Visibility="{Binding SettingsDirty, Converter={StaticResource BoolToVisible}}" />
+                </Grid>
+            </DockPanel>
+        </Border>
+    </Grid>
+</UserControl>

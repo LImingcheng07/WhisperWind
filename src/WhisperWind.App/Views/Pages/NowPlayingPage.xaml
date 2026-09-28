@@ -1,0 +1,170 @@
+<UserControl x:Class="WhisperWind.App.Views.Pages.NowPlayingPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:c="clr-namespace:WhisperWind.App.Controls">
+    <Grid Margin="0,4,0,0">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" MinHeight="240" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- ===== 曲目卡 ===== -->
+        <Border Style="{StaticResource Card}" Padding="26,20">
+            <Grid>
+                <TextBlock Text="风" FontFamily="{StaticResource SerifFont}" FontSize="96" Foreground="#16C0463A"
+                           HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,-10,6,0" IsHitTestVisible="False" />
+                <StackPanel>
+                    <DockPanel>
+                        <Border DockPanel.Dock="Right" Style="{StaticResource Chip}" Background="{StaticResource SealSoftBrush}">
+                            <TextBlock Text="{Binding StateText}" FontSize="12" Foreground="{StaticResource SealDeepBrush}" />
+                        </Border>
+                        <TextBlock Text="NOW · 此刻" Style="{StaticResource Caps}" />
+                    </DockPanel>
+                    <TextBlock Text="{Binding SongTitle}" Style="{StaticResource PageTitle}" FontSize="32" Margin="0,4,0,0"
+                               TextTrimming="CharacterEllipsis" />
+                    <TextBlock Style="{StaticResource Caps}" FontSize="13" Margin="0,2,0,0">
+                        <Run Text="— " /><Run Text="{Binding SongSubtitle, Mode=OneWay}" />
+                    </TextBlock>
+
+                    <Rectangle Height="1" Fill="{StaticResource DividerBrush}" Margin="0,14,0,12" />
+
+                    <UniformGrid Rows="1" Columns="5" HorizontalAlignment="Left" Width="520">
+                        <StackPanel>
+                            <TextBlock Text="BPM" Style="{StaticResource Caps}" FontStyle="Normal" FontSize="10" />
+                            <TextBlock Text="{Binding BpmText}" FontFamily="{StaticResource LatinFont}" FontSize="18" Foreground="{StaticResource InkBrush}" />
+                        </StackPanel>
+                        <StackPanel>
+                            <TextBlock Text="DURATION" Style="{StaticResource Caps}" FontStyle="Normal" FontSize="10" />
+                            <TextBlock Text="{Binding DurationText}" FontFamily="{StaticResource LatinFont}" FontSize="18" Foreground="{StaticResource InkBrush}" />
+                        </StackPanel>
+                        <StackPanel>
+                            <TextBlock Text="NOTES" Style="{StaticResource Caps}" FontStyle="Normal" FontSize="10" />
+                            <TextBlock Text="{Binding NoteCountText}" FontFamily="{StaticResource LatinFont}" FontSize="18" Foreground="{StaticResource InkBrush}" />
+                        </StackPanel>
+                        <StackPanel>
+                            <TextBlock Text="OCT-SHIFT" Style="{StaticResource Caps}" FontStyle="Normal" FontSize="10" />
+                            <TextBlock Text="{Binding TransposeText}" FontFamily="{StaticResource SerifFont}" FontSize="18" Foreground="{StaticResource InkBrush}" />
+                        </StackPanel>
+                        <StackPanel ToolTip="{Binding ScoreHint}">
+                            <TextBlock Text="SCORE" Style="{StaticResource Caps}" FontStyle="Normal" FontSize="10" />
+                            <TextBlock FontFamily="{StaticResource LatinFont}" FontSize="18" Foreground="{StaticResource InkBrush}">
+                                <Run Text="{Binding ScoreText, Mode=OneWay}" /><Run Text=" / 100" FontSize="11" Foreground="{StaticResource InkSoftBrush}" />
+                            </TextBlock>
+                        </StackPanel>
+                    </UniformGrid>
+
+                    <DockPanel Margin="0,16,0,0">
+                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                            <Border Style="{StaticResource Kbd}"><TextBlock Text="F8" FontSize="11" /></Border>
+                            <TextBlock Text="吹奏" Style="{StaticResource Caps}" Margin="0,0,12,0" VerticalAlignment="Center" />
+                            <Border Style="{StaticResource Kbd}"><TextBlock Text="F9" FontSize="11" /></Border>
+                            <TextBlock Text="止" Style="{StaticResource Caps}" Margin="0,0,12,0" VerticalAlignment="Center" />
+                            <Border Style="{StaticResource Kbd}"><TextBlock Text="F7" FontSize="11" /></Border>
+                            <TextBlock Text="悬浮窗" Style="{StaticResource Caps}" VerticalAlignment="Center" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <Button Style="{StaticResource RoundButton}" Content="&#xE892;" Command="{Binding PrevCommand}" ToolTip="上一首" />
+                            <Button Style="{StaticResource PlayButton}" Content="{Binding PlayGlyph}" Margin="12,0" Command="{Binding PlayGameCommand}"
+                                    ToolTip="在游戏里吹奏 / 暂停（F8）" />
+                            <Button Style="{StaticResource RoundButton}" Content="&#xE71A;" Command="{Binding StopCommand}" ToolTip="停止（F9）" />
+                            <Button Style="{StaticResource RoundButton}" Content="&#xE893;" Margin="12,0,0,0" Command="{Binding NextCommand}" ToolTip="下一首" />
+                            <Button Style="{StaticResource Pill}" c:Ex.Icon="{Binding PreviewGlyph}" Content="本机试听" Margin="18,0,0,0"
+                                    Command="{Binding PreviewCommand}" ToolTip="用电脑播放一遍转换后的旋律，不向游戏发送按键" />
+                        </StackPanel>
+                    </DockPanel>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- ===== 舞台：远山 + 口琴 ===== -->
+        <Border Grid.Row="1" CornerRadius="14" Margin="0,14,0,0" BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1"
+                ClipToBounds="True">
+            <Border.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                    <GradientStop Color="#EFE8DA" Offset="0" />
+                    <GradientStop Color="#DCE1D2" Offset="1" />
+                </LinearGradientBrush>
+            </Border.Background>
+            <Grid>
+                <Rectangle Fill="{StaticResource MountainsBrush}" IsHitTestVisible="False" />
+                <Grid Margin="26,18">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <DockPanel>
+                        <TextBlock DockPanel.Dock="Right" Text="C 大调 · 八孔" Style="{StaticResource Caps}" />
+                        <TextBlock Text="八孔 · 此刻" Style="{StaticResource Serif}" FontSize="16" FontWeight="SemiBold" />
+                    </DockPanel>
+                    <TextBlock Grid.Row="1" HorizontalAlignment="Center" Margin="0,8,0,0" Style="{StaticResource Serif}" FontSize="14"
+                               Foreground="{StaticResource InkSoftBrush}" TextAlignment="Center" TextWrapping="Wrap">
+                        <Run Text="「" /><Run Text="{Binding StageText, Mode=OneWay}" /><Run Text="」" />
+                    </TextBlock>
+
+                    <Grid Grid.Row="2">
+                        <c:HarmonicaView x:Name="Harp" MaxWidth="620" Height="150" VerticalAlignment="Center"
+                                         ActiveHole="{Binding ActiveHole}" SharpOn="{Binding SharpOn}" OctaveOn="{Binding OctaveOn}" OctaveDownOn="{Binding OctaveDownOn}"
+                                         KeyLabels="{Binding KeyLabels}" ToolTip="点击孔可以试音" />
+                        <!-- 倒计时大字 -->
+                        <Border Width="110" Height="110" CornerRadius="55" Background="#E6C0463A" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                Visibility="{Binding StateText, Converter={StaticResource EqualsToVisible}, ConverterParameter=倒计时}"
+                                Effect="{StaticResource SealShadow}">
+                            <TextBlock Text="{Binding Countdown}" Foreground="White" FontFamily="{StaticResource LatinFont}" FontSize="54"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                    </Grid>
+
+                    <Rectangle Grid.Row="3" Height="1" Fill="#33000000" VerticalAlignment="Top" />
+                    <UniformGrid Grid.Row="3" Rows="1" Margin="0,10,0,0">
+                        <StackPanel HorizontalAlignment="Center">
+                            <TextBlock Text="游戏" Style="{StaticResource Caps}" HorizontalAlignment="Center" />
+                            <TextBlock Text="{Binding GameStatusText}" Style="{StaticResource Serif}" FontSize="14" HorizontalAlignment="Center" />
+                        </StackPanel>
+                        <StackPanel HorizontalAlignment="Center">
+                            <TextBlock Text="节拍" Style="{StaticResource Caps}" HorizontalAlignment="Center" />
+                            <TextBlock Style="{StaticResource Serif}" FontSize="14" HorizontalAlignment="Center">
+                                <Run Text="{Binding Speed, Mode=OneWay, StringFormat={}{0:0.00}}" /><Run Text=" x" />
+                            </TextBlock>
+                        </StackPanel>
+                        <StackPanel HorizontalAlignment="Center">
+                            <TextBlock Text="还原" Style="{StaticResource Caps}" HorizontalAlignment="Center" />
+                            <TextBlock Text="{Binding ScoreHint}" Style="{StaticResource Serif}" FontSize="13" HorizontalAlignment="Center"
+                                       TextTrimming="CharacterEllipsis" MaxWidth="200" />
+                        </StackPanel>
+                        <StackPanel HorizontalAlignment="Center">
+                            <TextBlock Text="奏者" Style="{StaticResource Caps}" HorizontalAlignment="Center" />
+                            <TextBlock Text="远山客" Style="{StaticResource Serif}" FontSize="14" HorizontalAlignment="Center" />
+                        </StackPanel>
+                    </UniformGrid>
+                </Grid>
+            </Grid>
+        </Border>
+
+        <!-- ===== 音流 ===== -->
+        <Border Grid.Row="2" Style="{StaticResource Card}" Padding="20,12" Margin="0,14,0,0">
+            <StackPanel>
+                <DockPanel>
+                    <TextBlock DockPanel.Dock="Right" Style="{StaticResource Caps}" FontStyle="Normal">
+                        <Run Text="{Binding PositionText, Mode=OneWay}" /><Run Text="  /  " /><Run Text="{Binding DurationText, Mode=OneWay}" />
+                    </TextBlock>
+                    <TextBlock Text="♪ 音流 · WHISPER STREAM" Style="{StaticResource Caps}" />
+                    <StackPanel Orientation="Horizontal" Margin="16,0,0,0">
+                        <Ellipse Width="7" Height="7" Fill="{StaticResource SageBrush}" Margin="0,0,4,0" />
+                        <TextBlock Text="本音" Style="{StaticResource Caps}" Margin="0,0,10,0" />
+                        <Ellipse Width="7" Height="7" Fill="{StaticResource TerracottaBrush}" Margin="0,0,4,0" />
+                        <TextBlock Text="升半音" Style="{StaticResource Caps}" Margin="0,0,10,0" />
+                        <Ellipse Width="7" Height="7" Fill="{StaticResource GoldBrush}" Margin="0,0,4,0" />
+                        <TextBlock Text="高八度" Style="{StaticResource Caps}" />
+                    </StackPanel>
+                </DockPanel>
+                <c:PianoRoll Height="64" Margin="0,8,0,4" Events="{Binding PlanEvents}" PositionMs="{Binding PositionMs}" ActiveIndex="{Binding ActiveIndex}" />
+                <Slider x:Name="Progress" Style="{StaticResource ProgressSlider}" Minimum="0" Maximum="{Binding DurationMs}"
+                        Value="{Binding PositionMs}" IsEnabled="{Binding HasSong}"
+                        PreviewMouseLeftButtonDown="OnSeekStart" PreviewMouseLeftButtonUp="OnSeekEnd" />
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>

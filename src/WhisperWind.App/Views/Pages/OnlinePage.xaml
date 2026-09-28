@@ -1,0 +1,101 @@
+<UserControl x:Class="WhisperWind.App.Views.Pages.OnlinePage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:c="clr-namespace:WhisperWind.App.Controls">
+    <Border Style="{StaticResource Card}" Padding="24,20" Margin="0,4,0,0">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <StackPanel>
+                <TextBlock Text="在线曲库" Style="{StaticResource PageTitle}" />
+                <TextBlock Style="{StaticResource Muted}" Margin="0,2,0,0"
+                           Text="来自 BitMidi 的十几万首 MIDI。点「试听」先在电脑上听听转换效果，满意再「吹奏」。" />
+            </StackPanel>
+
+            <DockPanel Grid.Row="1" Margin="0,16,0,8">
+                <Button DockPanel.Dock="Right" Style="{StaticResource Pill}" c:Ex.Icon="&#xE734;" Content="热门" Margin="8,0,0,0"
+                        Command="{Binding PopularOnlineCommand}" />
+                <Button DockPanel.Dock="Right" Style="{StaticResource AccentPill}" c:Ex.Icon="&#xE721;" Content="搜索" Margin="8,0,0,0"
+                        Command="{Binding SearchOnlineCommand}" IsDefault="False" />
+                <TextBox x:Name="Query" Style="{StaticResource PaperTextBox}" Tag="输入英文曲名或拼音，如 canon / jasmine / mo li hua"
+                         Text="{Binding OnlineQuery, UpdateSourceTrigger=PropertyChanged}" KeyDown="OnQueryKeyDown" />
+            </DockPanel>
+
+            <WrapPanel Grid.Row="2" Margin="0,0,0,10">
+                <TextBlock Text="试试：" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="0,0,4,0" />
+                <Button Style="{StaticResource Ghost}" Content="Canon" Command="{Binding SearchQuickCommand}" CommandParameter="canon" />
+                <Button Style="{StaticResource Ghost}" Content="Ode to Joy" Command="{Binding SearchQuickCommand}" CommandParameter="ode to joy" />
+                <Button Style="{StaticResource Ghost}" Content="Für Elise" Command="{Binding SearchQuickCommand}" CommandParameter="fur elise" />
+                <Button Style="{StaticResource Ghost}" Content="Jasmine" Command="{Binding SearchQuickCommand}" CommandParameter="jasmine" />
+                <Button Style="{StaticResource Ghost}" Content="Twinkle" Command="{Binding SearchQuickCommand}" CommandParameter="twinkle" />
+                <Button Style="{StaticResource Ghost}" Content="Castle in the Sky" Command="{Binding SearchQuickCommand}" CommandParameter="castle in the sky" />
+                <Button Style="{StaticResource Ghost}" Content="Zelda" Command="{Binding SearchQuickCommand}" CommandParameter="zelda" />
+                <Button Style="{StaticResource Ghost}" Content="Pokemon" Command="{Binding SearchQuickCommand}" CommandParameter="pokemon" />
+            </WrapPanel>
+
+            <Grid Grid.Row="3">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <DockPanel Margin="0,0,0,6">
+                    <TextBlock DockPanel.Dock="Right" Text="{Binding OnlineStatus}" Style="{StaticResource Muted}" MaxWidth="420" TextAlignment="Right" />
+                    <TextBlock Text="{Binding OnlineHeading}" Style="{StaticResource Serif}" FontSize="15" FontWeight="Bold" />
+                </DockPanel>
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                    <ItemsControl ItemsSource="{Binding OnlineItems}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border BorderBrush="{StaticResource DividerBrush}" BorderThickness="0,0,0,1" Padding="8,9">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="28" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="&#xE73E;" Style="{StaticResource Icon}" Foreground="{StaticResource SageBrush}" ToolTip="已下载"
+                                                   Visibility="{Binding IsDownloaded, Converter={StaticResource BoolToVisible}}" />
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding Title}" Style="{StaticResource Serif}" FontSize="14" TextTrimming="CharacterEllipsis" />
+                                            <TextBlock Text="{Binding PlaysText}" Style="{StaticResource Caps}" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                            <TextBlock Text="下载中…" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="0,0,8,0"
+                                                       Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisible}}" />
+                                            <Button Style="{StaticResource Pill}" c:Ex.Icon="&#xE7F6;" Content="试听" Padding="10,3" Margin="0,0,6,0"
+                                                    Command="{Binding DataContext.PreviewOnlineCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                    CommandParameter="{Binding}" />
+                                            <Button Style="{StaticResource Pill}" c:Ex.Icon="&#xE896;" Content="收藏" Padding="10,3" Margin="0,0,6,0"
+                                                    ToolTip="下载到曲库"
+                                                    Visibility="{Binding IsDownloaded, Converter={StaticResource InverseVisible}}"
+                                                    Command="{Binding DataContext.DownloadOnlineCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                    CommandParameter="{Binding}" />
+                                            <Button Style="{StaticResource AccentPill}" c:Ex.Icon="&#xE768;" Content="吹奏" Padding="10,3"
+                                                    Command="{Binding DataContext.PlayOnlineCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                    CommandParameter="{Binding}" />
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+                <Border Grid.Row="1" Background="#88FAF6EE" Visibility="{Binding OnlineBusy, Converter={StaticResource BoolToVisible}}">
+                    <TextBlock Text="加载中……" Style="{StaticResource Serif}" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                </Border>
+            </Grid>
+
+            <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,10,0,0">
+                <Button Style="{StaticResource Pill}" c:Ex.Icon="&#xE76B;" Content="上一页" Command="{Binding OnlinePrevPageCommand}" />
+                <TextBlock Text="{Binding OnlinePageText}" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="14,0" />
+                <Button Style="{StaticResource Pill}" c:Ex.Icon="&#xE76C;" Content="下一页" Command="{Binding OnlineNextPageCommand}" />
+            </StackPanel>
+        </Grid>
+    </Border>
+</UserControl>

@@ -50,7 +50,7 @@ public class HarmonicaConverterTests
         var m = new HarmonicaMapping();
         var c = new HarmonicaConverter(m);
         // F#6 = 90 不在默认映射（默认最大 84）→ 折到 78（在 octaveUpSharp）
-        // 78 = octaveUpSharp[3] = MainKey4 + MouseSide + MouseMiddle
+        // 78 = octaveUpSharp[3] = MainKey4 + Sharp + OctaveUp
         var notes = MakeNotes((90, 0, 300));
         var plan = c.Convert("t.mid", 0, notes);
         Assert.That(plan.Events.Count, Is.EqualTo(1));
@@ -58,7 +58,7 @@ public class HarmonicaConverterTests
     }
 
     [Test]
-    public void Sharps_Are_Playable_And_Use_MouseSide()
+    public void Sharps_Are_Playable_And_Use_Sharp()
     {
         var m = new HarmonicaMapping();
         var c = new HarmonicaConverter(m);
@@ -66,17 +66,20 @@ public class HarmonicaConverterTests
         var notes = MakeNotes((66, 0, 300));
         var plan = c.Convert("t.mid", 0, notes);
         Assert.That(plan.Events.Count, Is.EqualTo(1));
-        Assert.That(plan.Events[0].Keys.Contains(GameKey.MouseSide), Is.True);
+        Assert.That(plan.Events[0].Keys.Contains(GameKey.Sharp), Is.True);
     }
 
     [Test]
-    public void Too_Close_Notes_Produce_Error_And_Are_Skipped()
+    public void Too_Close_Notes_Are_Skipped_With_Warning()
     {
         var m = new HarmonicaMapping();
         var c = new HarmonicaConverter(m, minGapMs: 100);
         // gap = 50ms, which is &lt; 100ms
         var notes = MakeNotes((60, 0, 30), (62, 50, 80));
         var plan = c.Convert("t.mid", 0, notes);
-        Assert.That(plan.Errors.Any(e => e.Contains("too close")), Is.True);
+        Assert.That(plan.Warnings.Any(e => e.Contains("too close")), Is.True);
+        Assert.That(plan.Events.Count, Is.EqualTo(1));
+        Assert.That(plan.TooCloseCount, Is.EqualTo(1));
+        Assert.That(plan.IsValid, Is.True);
     }
 }

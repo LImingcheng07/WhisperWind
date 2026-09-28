@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 namespace WhisperWind.Core;
 
 /// <summary>
-/// 按键下发抽象。Core 只依赖这个接口，平台实现（Windows SendInput / mock）由 App 层注入。
+/// 按键下发抽象。Core 只依赖这个接口，平台实现（Windows SendInput / 试听合成器 / mock）由 App 层注入。
 /// </summary>
 public interface INotePlayer : IAsyncDisposable
 {
@@ -18,8 +18,15 @@ public interface INotePlayer : IAsyncDisposable
     void Release(IReadOnlyList<GameKey> keys);
     /// <summary>完全松开所有键（紧急停止时调用）</summary>
     void ReleaseAll();
-    /// <summary>启动调度循环（按 Plan 顺序执行）</summary>
-    Task RunAsync(PlaybackPlan plan, double speed, CancellationToken ct);
+
+    /// <summary>一个音开始；默认按下它的键。试听播放器可改成直接发声。</summary>
+    void NoteOn(KeyEvent e) => Press(e.Keys);
+    /// <summary>一个音结束；默认松开它的键。</summary>
+    void NoteOff(KeyEvent e) => Release(e.Keys);
+
+    /// <summary>按 Plan 顺序执行（固定速度，无暂停）</summary>
+    Task RunAsync(PlaybackPlan plan, double speed, CancellationToken ct)
+        => PlaybackRunner.RunAsync(this, plan, new PlaybackControl { Speed = speed }, null, ct);
 }
 
 /// <summary>
@@ -27,29 +34,20 @@ public interface INotePlayer : IAsyncDisposable
 /// </summary>
 public sealed class FakeNotePlayer : INotePlayer
 {
+    private readonly object _lock = new();
     public List<(long ms, string action, IReadOnlyList<GameKey> keys)> Log { get; } = new();
     public bool IsTargetFocused => true;
 
-    public void Press(IReadOnlyList<GameKey> keys) => Log.Add((DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), "PRESS", keys));
-    public void Release(IReadOnlyList<GameKey> keys) => Log.Add((DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), "RELEASE", keys));
-    public void ReleaseAll() => Log.Add((DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), "RELEASE_ALL", Array.Empty<GameKey>()));
+    public void Press(IReadOnlyList<GameKey> keys) => Add("PRESS", keys);
+    public void Release(IReadOnlyList<GameKey> keys) => Add("RELEASE", keys);
+    public void ReleaseAll() => Add("RELEASE_ALL", Array.Empty<GameKey>());
     public ValueTask DisposeAsync() => ValueTask.CompletedTask;
 
-    public async Task RunAsync(PlaybackPlan plan, double speed, CancellationToken ct)
+    public Task RunAsync(PlaybackPlan plan, double speed, CancellationToken ct)
+        => PlaybackRunner.RunAsync(this, plan, new PlaybackControl { Speed = speed }, null, ct);
+
+    private void Add(string action, IReadOnlyList<GameKey> keys)
     {
-        if (!plan.IsValid) return;
-        var sw = System.Diagnostics.Stopwatch.StartNew();
-        foreach (var e in plan.Events)
-        {
-            long targetMs = (long)(e.StartMs / speed);
-            while (sw.ElapsedMilliseconds < targetMs)
-            {
-                ct.ThrowIfCancellationRequested();
-                await Task.Delay(1, ct);
-            }
-            Press(e.Keys);
-            await Task.Delay((int)(e.DurationMs / speed), ct);
-            Release(e.Keys);
-        }
+        lock (_lock) Log.Add((DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), action, keys));
     }
 }

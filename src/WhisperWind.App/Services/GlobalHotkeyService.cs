@@ -1,78 +1,57 @@
 using System;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
-using System.Windows;
 using System.Windows.Interop;
 
 namespace WhisperWind.App.Services;
 
 /// <summary>
-/// 全局热键服务（F8/F9/F10 不被游戏独占时仍能触发）。
-/// 走 user32 RegisterHotKey；hotkey id 0xB001 ~ 0xB00F。
-/// 必须从 WPF UI 线程 Start；Stop 时反注册。
+/// 全局热键（游戏在前台时也能触发）：
+///   F8 = 吹奏 / 暂停    F9 = 停止    F7 = 显示/隐藏悬浮窗
+/// 走 user32 RegisterHotKey；注册失败不抛异常，结果交给自检页展示。
 /// </summary>
 public sealed class GlobalHotkeyService : IDisposable
 {
-    public enum HotkeyAction
+    public sealed record Hotkey(int Id, uint Vk, string Name, string Purpose);
+
+    public static readonly IReadOnlyList<Hotkey> All = new[]
     {
-        PlayToggle,    // F8
-        PauseResume,   // F9
-        EmergencyStop, // F10
-    }
-
-    private const int HotkeyIdPlay = 0xB001;
-    private const int HotkeyIdPause = 0xB002;
-    private const int HotkeyIdStop = 0xB003;
-
-    private const uint MOD_NONE = 0;
-    private const uint VK_F8 = 0x77;
-    private const uint VK_F9 = 0x78;
-    private const uint VK_F10 = 0x79;
+        new Hotkey(0xB001, 0x77, "F8", "吹奏 / 暂停"),
+        new Hotkey(0xB002, 0x78, "F9", "停止"),
+        new Hotkey(0xB003, 0x76, "F7", "悬浮窗"),
+    };
 
     private const int WM_HOTKEY = 0x0312;
+    private const uint MOD_NOREPEAT = 0x4000;
 
-    private HwndSource? _hwndSource;
-    private bool _registered;
+    private HwndSource? _source;
+    private IntPtr _hwnd;
+    private readonly Dictionary<string, bool> _status = new();
 
-    public event Action? PlayTogglePressed;
-    public event Action? PauseResumePressed;
-    public event Action? EmergencyStopPressed;
+    /// <summary>每个热键是否注册成功（被别的程序占用时为 false）</summary>
+    public IReadOnlyDictionary<string, bool> Status => _status;
 
-    public void Start(Window window)
+    public event Action? PlayPausePressed;
+    public event Action? StopPressed;
+    public event Action? OverlayPressed;
+
+    public void Start(IntPtr hwnd)
     {
-        if (_registered) return;
-        var helper = new WindowInteropHelper(window);
-        if (helper.Handle == IntPtr.Zero)
-        {
-            // 窗口未显示，先 ensure handle
-            window.SourceInitialized += (_, _) => Start(window);
-            return;
-        }
-        _hwndSource = HwndSource.FromHwnd(helper.Handle);
-        _hwndSource?.AddHook(WndProc);
-
-        // 注册三个全局热键
-        if (!RegisterHotKey(helper.Handle, HotkeyIdPlay, MOD_NONE, VK_F8))
-            throw new InvalidOperationException("F8 全局热键注册失败，可能被占用。");
-        if (!RegisterHotKey(helper.Handle, HotkeyIdPause, MOD_NONE, VK_F9))
-            throw new InvalidOperationException("F9 全局热键注册失败。");
-        if (!RegisterHotKey(helper.Handle, HotkeyIdStop, MOD_NONE, VK_F10))
-            throw new InvalidOperationException("F10 全局热键注册失败。");
-
-        _registered = true;
+        if (_hwnd != IntPtr.Zero) return;
+        _hwnd = hwnd;
+        _source = HwndSource.FromHwnd(hwnd);
+        _source?.AddHook(WndProc);
+        foreach (var hk in All)
+            _status[hk.Name] = RegisterHotKey(hwnd, hk.Id, MOD_NOREPEAT, hk.Vk);
     }
 
     public void Stop()
     {
-        if (!_registered) return;
-        var helper = new WindowInteropHelper(Application.Current.MainWindow ?? new Window());
-        if (helper.Handle != IntPtr.Zero)
-        {
-            UnregisterHotKey(helper.Handle, HotkeyIdPlay);
-            UnregisterHotKey(helper.Handle, HotkeyIdPause);
-            UnregisterHotKey(helper.Handle, HotkeyIdStop);
-        }
-        _hwndSource?.RemoveHook(WndProc);
-        _registered = false;
+        if (_hwnd == IntPtr.Zero) return;
+        foreach (var hk in All) UnregisterHotKey(_hwnd, hk.Id);
+        _source?.RemoveHook(WndProc);
+        _hwnd = IntPtr.Zero;
+        _status.Clear();
     }
 
     private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
@@ -80,9 +59,10 @@ public sealed class GlobalHotkeyService : IDisposable
         if (msg != WM_HOTKEY) return IntPtr.Zero;
         switch (wParam.ToInt32())
         {
-            case HotkeyIdPlay:  PlayTogglePressed?.Invoke(); break;
-            case HotkeyIdPause: PauseResumePressed?.Invoke(); break;
-            case HotkeyIdStop:  EmergencyStopPressed?.Invoke(); break;
+            case 0xB001: PlayPausePressed?.Invoke(); break;
+            case 0xB002: StopPressed?.Invoke(); break;
+            case 0xB003: OverlayPressed?.Invoke(); break;
+            default: return IntPtr.Zero;
         }
         handled = true;
         return IntPtr.Zero;
@@ -90,7 +70,6 @@ public sealed class GlobalHotkeyService : IDisposable
 
     public void Dispose() => Stop();
 
-    // === P/Invoke ===
     [DllImport("user32.dll", SetLastError = true)]
     private static extern bool RegisterHotKey(IntPtr hWnd, int id, uint fsModifiers, uint vk);
 

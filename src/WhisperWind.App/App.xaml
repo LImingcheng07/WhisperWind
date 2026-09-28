@@ -3,20 +3,25 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              xmlns:converters="clr-namespace:WhisperWind.App.Converters"
-             StartupUri="Views/MainWindow.xaml">
+             ShutdownMode="OnMainWindowClose">
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <!-- WPF-UI 3.x 的主题/控件资源，不存在 Themes/Fluent/Fluent.xaml 这个路径 -->
-                <ui:ThemesDictionary Theme="Dark" />
+                <!-- WPF-UI 只用来给 ComboBox / ScrollBar 等基础控件打底，主体样式在 Themes/Paper.xaml -->
+                <ui:ThemesDictionary Theme="Light" />
                 <ui:ControlsDictionary />
+                <ResourceDictionary Source="Themes/Paper.xaml" />
             </ResourceDictionary.MergedDictionaries>
-            <converters:BoolToBrushConverter x:Key="BoolToBrush"
-                                             True="#7DBB6B"
-                                             False="#9A8866" />
+            <converters:BoolToBrushConverter x:Key="BoolToBrush" True="#7F9A74" False="#B5AA93" />
             <converters:BoolToVisibilityConverter x:Key="BoolToVisible" />
             <converters:BoolToVisibilityConverter x:Key="InverseVisible" Invert="True" />
             <converters:NotBoolConverter x:Key="NotBool" />
+            <converters:EqualsConverter x:Key="Equals" />
+            <converters:EqualsToVisibilityConverter x:Key="EqualsToVisible" />
+            <converters:EqualsToVisibilityConverter x:Key="NotEqualsToVisible" Invert="True" />
+            <converters:EmptyToCollapsedConverter x:Key="EmptyToCollapsed" />
+            <converters:EmptyToCollapsedConverter x:Key="EmptyToVisible" Invert="True" />
+            <converters:CheckLevelToBrushConverter x:Key="CheckLevelToBrush" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>

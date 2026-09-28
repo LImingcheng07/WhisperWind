@@ -5,308 +5,483 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using WhisperWind.App.BuiltIn;
 using WhisperWind.App.Online;
 using WhisperWind.App.Services;
+using WhisperWind.Core;
 
 namespace WhisperWind.App.ViewModels;
 
-public partial class MainViewModel : ObservableObject
+/// <summary>
+/// 主视图模型：正在吹（本文件）、曲库、在线曲库、NPC 歌诀、自检、设置、AI 分别在同名 partial 文件里。
+/// 主窗口和悬浮窗共用同一个实例。
+/// </summary>
+public partial class MainViewModel : ObservableObject, IAsyncDisposable
 {
-    private readonly HarmonicaEngine _engine;
+    public static string DataDir { get; } = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "WhisperWind");
+
+    private readonly AppSettings _settings;
+    private readonly WindowsNotePlayer _gamePlayer;
+    private readonly MidiPreviewPlayer _preview;
     private readonly TargetWindowWatcher _watcher;
-    private readonly GlobalHotkeyService _hotkey;
-    private readonly MidiImportService _importer;
+    private readonly GlobalHotkeyService _hotkeys;
+    private readonly HarmonicaEngine _engine;
+    private readonly LibraryService _library;
     private readonly OnlineLibraryService _online;
     private readonly AiAdvisorService _ai;
-    private readonly AppSettings _settings;
-    private readonly string _appDataDir;
+    private readonly DiagnosticsService _diag;
+    private readonly Dispatcher _ui;
+    private readonly DispatcherTimer _tick;
+    private readonly DispatcherTimer _slowTick;
+    private bool _suppressRebuild;
+    private bool _overlayShownOnce;
 
-    [ObservableProperty] private string _statusText = "准备就绪";
-    [ObservableProperty] private string _targetWindowText = "未锁定";
-    [ObservableProperty] private bool _isTargetFocused;
-    [ObservableProperty] private string _currentTrackText = "无";
-    [ObservableProperty] private string _playButtonText = "▶ 演奏 (F8)";
+    public AppSettings Settings => _settings;
+    public string Version { get; } = "v" + (typeof(MainViewModel).Assembly.GetName().Version?.ToString(3) ?? "0.2.0");
+
+    // ===== 页面 =====
+    [ObservableProperty] private string _currentPage = "now";
+
+    // ===== 当前曲目 =====
+    [ObservableProperty] private string _songTitle = "尚未选曲";
+    [ObservableProperty] private string _songSubtitle = "从右侧「山间小调」或曲库里挑一首";
+    [ObservableProperty] private string _bpmText = "--";
+    [ObservableProperty] private string _durationText = "0:00";
+    [ObservableProperty] private string _noteCountText = "--";
+    [ObservableProperty] private string _transposeText = "--";
+    [ObservableProperty] private string _scoreText = "--";
+    [ObservableProperty] private string _scoreHint = "";
+    [ObservableProperty] private bool _hasSong;
+    [ObservableProperty] private IReadOnlyList<KeyEvent>? _planEvents;
+
+    // ===== 播放进度 =====
+    [ObservableProperty] private double _positionMs;
+    [ObservableProperty] private double _durationMs = 1;
+    [ObservableProperty] private string _positionText = "0:00";
+    [ObservableProperty] private int _activeIndex = -1;
+    [ObservableProperty] private int _activeHole = -1;
+    [ObservableProperty] private bool _sharpOn;
+    [ObservableProperty] private bool _octaveOn;
+    [ObservableProperty] private bool _octaveDownOn;
+
+    // ===== 状态 =====
+    [ObservableProperty] private string _stateText = "未选曲";
+    [ObservableProperty] private string _stageText = "选一首曲子，吹给山听";
+    [ObservableProperty] private bool _isRunning;
+    [ObservableProperty] private bool _isPreviewing;
+    [ObservableProperty] private string _playGlyph = Glyph.Play;
+    [ObservableProperty] private string _previewGlyph = Glyph.Headphone;
+    [ObservableProperty] private int _countdown;
+
+    // ===== 调音 =====
+    public ObservableCollection<MidiTrackInfo> SongTracks { get; } = new();
+    [ObservableProperty] private MidiTrackInfo? _selectedTrack;
+    [ObservableProperty] private int _transpose;
     [ObservableProperty] private double _speed = 1.0;
-    [ObservableProperty] private string _errorMessage = "";
-    [ObservableProperty] private bool _hasError;
+    [ObservableProperty] private int _countdownSeconds = 3;
+    [ObservableProperty] private bool _canTune;
 
-    // AI 状态
-    [ObservableProperty] private string _aiChatInput = "";
-    [ObservableProperty] private string _aiChatHistory = "（对话将在此显示）";
-    [ObservableProperty] private bool _aiBusy;
+    // ===== 游戏/系统状态 =====
+    [ObservableProperty] private bool _gameFound;
+    [ObservableProperty] private bool _gameFocused;
+    [ObservableProperty] private string _gameStatusText = "未找到游戏窗口";
+    [ObservableProperty] private bool _isAdmin;
+    [ObservableProperty] private bool _inputBlocked;
+    [ObservableProperty] private IReadOnlyList<string> _keyLabels = Array.Empty<string>();
 
-    // 在线曲库
-    [ObservableProperty] private string _onlineStatus = "尚未刷新";
-    [ObservableProperty] private bool _onlineBusy;
-    [ObservableProperty] private string _onlineQuery = "";
+    // ===== 提示条 / 悬浮窗 =====
+    [ObservableProperty] private string _toastText = "";
+    [ObservableProperty] private bool _toastVisible;
+    [ObservableProperty] private bool _overlayVisible;
+    private DispatcherTimer? _toastTimer;
 
-    public ObservableCollection<TrackMeta> Tracks { get; } = new();
-    public ObservableCollection<OnlineTrackMeta> OnlineTracks { get; } = new();
+    /// <summary>进度条拖动中，暂停用引擎位置刷新</summary>
+    public bool IsSeeking { get; set; }
 
-    public MainViewModel(
-        HarmonicaEngine engine,
-        TargetWindowWatcher watcher,
-        GlobalHotkeyService hotkey,
-        MidiImportService importer,
-        OnlineLibraryService online,
-        AiAdvisorService ai,
-        AppSettings settings,
-        string appDataDir)
+    public MainViewModel()
     {
-        _engine = engine;
-        _watcher = watcher;
-        _hotkey = hotkey;
-        _importer = importer;
-        _online = online;
-        _ai = ai;
-        _settings = settings;
-        _appDataDir = appDataDir;
+        _ui = Application.Current.Dispatcher;
+        _settings = AppSettings.Load();
 
-        // 注入配置
-        _ai.ApiKey = settings.AnthropicApiKey ?? "";
-        _ai.Model = settings.AiModel;
-
-        _engine.StateChanged += OnEngineState;
-        _engine.Error += msg => ShowError(msg);
-        _watcher.FocusChanged += focused => Application.Current.Dispatcher.Invoke(() =>
+        KeyBindingSet bindings;
+        try { bindings = KeyBindingSet.FromSettings(_settings); }
+        catch
         {
-            IsTargetFocused = focused;
-            TargetWindowText = focused
-                ? $"✓ {_watcher.TargetTitle}"
-                : _watcher.TargetHwnd == IntPtr.Zero
-                    ? "未锁定"
-                    : $"○ {_watcher.TargetTitle} (后台)";
+            _settings.MainKeys = AppSettings.DefaultMainKeys();
+            _settings.ResetModifiers();
+            bindings = KeyBindingSet.FromSettings(_settings);
+        }
+
+        _gamePlayer = new WindowsNotePlayer(bindings) { ModifierLeadMs = _settings.ModifierLeadMs };
+        _preview = new MidiPreviewPlayer { Program = _settings.PreviewProgram };
+        _watcher = new TargetWindowWatcher(_settings.GameWindowKeywords);
+        _hotkeys = new GlobalHotkeyService();
+        _engine = new HarmonicaEngine(_gamePlayer, _preview, _watcher, _settings);
+        _library = new LibraryService(DataDir);
+        _online = new OnlineLibraryService(DataDir) { Provider = _settings.OnlineProvider, CustomIndexUrl = _settings.CustomIndexUrl };
+        _ai = new AiAdvisorService();
+        _diag = new DiagnosticsService(_watcher, _hotkeys, _gamePlayer, _settings, DataDir);
+
+        _speed = _engine.Speed;
+        _countdownSeconds = _settings.CountdownSeconds;
+        _isAdmin = DiagnosticsService.IsElevated;
+        KeyLabels = bindings.Main.Select(b => b.DisplayName).ToList();
+
+        _engine.StateChanged += _ => _ui.BeginInvoke(UpdateState);
+        _engine.PlanChanged += () => _ui.BeginInvoke(UpdatePlanInfo);
+        _engine.Error += msg => _ui.BeginInvoke(() => Toast(msg));
+        _gamePlayer.InputBlocked += () => _ui.BeginInvoke(() =>
+        {
+            InputBlocked = true;
+            Toast("按键被 Windows 拦截：游戏以管理员运行，请到「自检」以管理员重启风声");
         });
+        _watcher.FocusChanged += _ => _ui.BeginInvoke(UpdateGameStatus);
+        _watcher.TargetChanged += () => _ui.BeginInvoke(UpdateGameStatus);
 
-        _hotkey.PlayTogglePressed += () => Application.Current.Dispatcher.Invoke(PlayOrToggle);
-        _hotkey.PauseResumePressed += () => Application.Current.Dispatcher.Invoke(PauseOrResume);
-        _hotkey.EmergencyStopPressed += () => Application.Current.Dispatcher.Invoke(Stop);
+        _hotkeys.PlayPausePressed += () => PlayGameCommand.Execute(null);
+        _hotkeys.StopPressed += () => StopCommand.Execute(null);
+        _hotkeys.OverlayPressed += () => OverlayVisible = !OverlayVisible;
 
-        // 加载预置曲
-        foreach (var t in BuiltInTracks.EnsureBuilt(_appDataDir))
-        {
-            Tracks.Add(t);
-        }
+        _tick = new DispatcherTimer(TimeSpan.FromMilliseconds(33), DispatcherPriority.Render, (_, _) => OnTick(), _ui);
+        _slowTick = new DispatcherTimer(TimeSpan.FromSeconds(3), DispatcherPriority.Background, (_, _) => RefreshLocalChecks(), _ui);
+
+        InitSettingsPage();
+        InitAi();
+        UpdateState();
     }
 
-    private void OnEngineState(HarmonicaEngine.State s)
-    {
-        Application.Current.Dispatcher.Invoke(() =>
-        {
-            StatusText = s switch
-            {
-                HarmonicaEngine.State.Idle => "准备就绪",
-                HarmonicaEngine.State.Loading => "加载中…",
-                HarmonicaEngine.State.Ready => "已加载",
-                HarmonicaEngine.State.Playing => "演奏中…",
-                HarmonicaEngine.State.Paused => "已暂停",
-                _ => s.ToString(),
-            };
-            PlayButtonText = s switch
-            {
-                HarmonicaEngine.State.Playing => "⏸ 暂停 (F9)",
-                HarmonicaEngine.State.Paused => "▶ 继续 (F8)",
-                _ => "▶ 演奏 (F8)",
-            };
-        });
-    }
-
-    [RelayCommand]
-    private async Task LoadTrackAsync(TrackMeta? meta)
-    {
-        if (meta == null) return;
-        var path = Path.Combine(_appDataDir, "WhisperWind", "tracks", meta.FileName);
-        if (!File.Exists(path))
-            path = _importer.FullPath(meta.FileName);  // 用户曲目
-        await _engine.LoadAsync(path);
-        CurrentTrackText = meta.Name;
-    }
-
-    [RelayCommand]
-    private async Task ImportLocalMidiAsync()
-    {
-        try
-        {
-            var meta = _importer.PickAndImport();
-            if (meta == null) return;
-            Tracks.Add(meta);
-            await LoadTrackAsync(meta);
-        }
-        catch (Exception ex)
-        {
-            ShowError($"导入失败: {ex.Message}");
-        }
-    }
-
-    [RelayCommand]
-    private async Task RefreshOnlineAsync()
-    {
-        if (OnlineBusy) return;
-        OnlineBusy = true;
-        OnlineStatus = "拉取索引…";
-        OnlineTracks.Clear();
-        try
-        {
-            var list = await _online.SearchAsync(_onlineQuery);
-            foreach (var t in list) OnlineTracks.Add(t);
-            OnlineStatus = $"已加载 {list.Count} 首";
-        }
-        catch (Exception ex)
-        {
-            OnlineStatus = $"失败: {ex.Message}";
-        }
-        finally
-        {
-            OnlineBusy = false;
-        }
-    }
-
-    [RelayCommand]
-    private async Task DownloadOnlineAsync(OnlineTrackMeta? meta)
-    {
-        if (meta == null || OnlineBusy) return;
-        OnlineBusy = true;
-        OnlineStatus = $"下载 {meta.Name}…";
-        try
-        {
-            var path = await _online.DownloadAsync(meta);
-            var trackMeta = new TrackMeta($"{meta.Name} · {meta.Author}", Path.GetFileName(path));
-            Tracks.Add(trackMeta);
-            OnlineStatus = $"{meta.Name} 已加入曲库";
-        }
-        catch (Exception ex)
-        {
-            OnlineStatus = $"下载失败: {ex.Message}";
-        }
-        finally
-        {
-            OnlineBusy = false;
-        }
-    }
-
-    [RelayCommand]
-    private async Task LoadOnlinePageAsync(int page)
-    {
-        if (OnlineBusy) return;
-        OnlineBusy = true;
-        OnlineStatus = $"拉取第 {page} 页…";
-        OnlineTracks.Clear();
-        try
-        {
-            var list = await _online.GetPageAsync(page);
-            foreach (var t in list) OnlineTracks.Add(t);
-            OnlineStatus = $"第 {page} 页: {list.Count} 首";
-        }
-        catch (Exception ex)
-        {
-            OnlineStatus = $"失败: {ex.Message}";
-        }
-        finally
-        {
-            OnlineBusy = false;
-        }
-    }
-
-    [RelayCommand]
-    private async Task PlayOrToggle()
-    {
-        _engine.SetSpeed(Speed);
-        await _engine.PlayAsync();
-    }
-
-    [RelayCommand]
-    private void PauseOrResume()
-    {
-        if (_engine.Current == HarmonicaEngine.State.Playing) _engine.Pause();
-        else if (_engine.Current == HarmonicaEngine.State.Paused) _engine.Resume();
-    }
-
-    [RelayCommand]
-    private void Stop() => _engine.Stop();
-
-    [RelayCommand]
-    private void DismissError() => HasError = false;
-
-    [RelayCommand]
-    private async Task AskAiAsync()
-    {
-        if (AiBusy) return;
-        var input = AiChatInput?.Trim();
-        if (string.IsNullOrEmpty(input)) return;
-
-        AiBusy = true;
-        AiChatInput = "";
-        AiChatHistory += $"\n\n你: {input}\n知音: …";
-        try
-        {
-            var plan = _engine.CurrentPlan;
-            var reply = await _ai.AskAsync(input, plan, plan?.Warnings.ToList() ?? new());
-            AiChatHistory += reply;
-        }
-        catch (Exception ex)
-        {
-            AiChatHistory += $"\n(出错: {ex.Message})";
-        }
-        finally
-        {
-            AiBusy = false;
-        }
-    }
-
-    [RelayCommand]
-    private void ClearAiHistory()
-    {
-        _ai.ClearHistory();
-        AiChatHistory = "（对话将在此显示）";
-    }
-
-    private void ShowError(string msg) => Application.Current.Dispatcher.Invoke(() =>
-    {
-        ErrorMessage = msg;
-        HasError = true;
-    });
-
-    public void StartServices(Window window)
+    /// <summary>主窗口句柄就绪后调用：启动窗口监测、热键、定时器，扫描曲库</summary>
+    public async Task StartAsync(IntPtr hwnd)
     {
         _watcher.Start();
-        _hotkey.Start(window);
+        _hotkeys.Start(hwnd);
+        _tick.Start();
+        _slowTick.Start();
+        RefreshLocalChecks();
+        await RefreshLibraryAsync();
+        _ = RunChecksAsync();
+        _ = LoadOnlineAsync(OnlineQuery, 0);
     }
 
-    public void StopServices()
+    // ===== 播放控制 =====
+
+    /// <summary>F8 / 主播放键：未开始 → 游戏内吹奏；吹奏中 → 暂停/继续；等待中 → 取消</summary>
+    [RelayCommand]
+    private async Task PlayGameAsync()
     {
-        _hotkey.Stop();
-        _watcher.Stop();
+        if (_engine.IsRunning)
+        {
+            if (_engine.CurrentMode == HarmonicaEngine.Mode.Preview)
+            {
+                await _engine.StopAsync();
+                await _engine.PlayAsync(HarmonicaEngine.Mode.Game, (long)PositionMs);
+                return;
+            }
+            _engine.TogglePause();
+            return;
+        }
+        if (!HasSong)
+        {
+            Toast("先选一首曲子");
+            return;
+        }
+        await _engine.PlayAsync(HarmonicaEngine.Mode.Game, (long)PositionMs);
     }
 
-    public void ReloadSettings(AppSettings s)
+    /// <summary>本机试听（不发按键）</summary>
+    [RelayCommand]
+    private async Task PreviewAsync()
     {
-        _ai.CurrentProvider = s.AiProvider switch
+        if (_engine.IsRunning)
         {
-            "openai" => AiAdvisorService.Provider.OpenAI,
-            "custom" => AiAdvisorService.Provider.Custom,
-            _ => AiAdvisorService.Provider.Anthropic,
-        };
-        _ai.ApiKey = s.AiProvider switch
+            if (_engine.CurrentMode == HarmonicaEngine.Mode.Preview)
+            {
+                _engine.TogglePause();
+                return;
+            }
+            await _engine.StopAsync();
+        }
+        if (!HasSong)
         {
-            "openai" => s.OpenaiApiKey ?? "",
-            "custom" => s.CustomApiKey ?? "",
-            _ => s.AnthropicApiKey ?? "",
-        };
-        _ai.Model = s.AiModel;
-        _ai.Endpoint = s.AiProvider == "custom" && !string.IsNullOrWhiteSpace(s.CustomEndpoint)
-            ? s.CustomEndpoint
-            : (_ai.CurrentProvider == AiAdvisorService.Provider.OpenAI
-                ? AiAdvisorService.OpenAIEndpoint
-                : AiAdvisorService.AnthropicEndpoint);
+            Toast("先选一首曲子");
+            return;
+        }
+        if (MidiPreviewPlayer.DeviceCount == 0)
+        {
+            Toast("系统里没有 MIDI 输出设备，无法试听");
+            return;
+        }
+        await _engine.PlayAsync(HarmonicaEngine.Mode.Preview, (long)PositionMs);
+    }
 
-        // 在线曲库
-        if (_online != null)
+    [RelayCommand]
+    private void Stop()
+    {
+        _engine.Stop();
+        PositionMs = 0;
+        PositionText = "0:00";
+    }
+
+    [RelayCommand]
+    private Task PrevAsync() => StepTrackAsync(-1);
+
+    [RelayCommand]
+    private Task NextAsync() => StepTrackAsync(+1);
+
+    public void SeekTo(double ms)
+    {
+        _engine.Seek((long)ms);
+        PositionMs = ms;
+        PositionText = FormatTime(ms);
+    }
+
+    /// <summary>点击口琴孔：本机放一下这个孔的音（C4..C5）</summary>
+    public void PreviewHole(int hole)
+    {
+        int[] pitches = { 60, 62, 64, 65, 67, 69, 71, 72 };
+        if (hole < 0 || hole > 7 || _engine.IsRunning) return;
+        _preview.Program = _settings.PreviewProgram;
+        _ = _preview.PlayNoteAsync(pitches[hole]);
+        ActiveHole = hole;
+    }
+
+    [RelayCommand]
+    private void ToggleOverlay() => OverlayVisible = !OverlayVisible;
+
+    [RelayCommand]
+    private void Navigate(string page) => CurrentPage = page;
+
+    // ===== 调音 =====
+
+    partial void OnSpeedChanged(double value)
+    {
+        _engine.Speed = value;
+        _settings.Speed = _engine.Speed;
+    }
+
+    [RelayCommand]
+    private void SpeedUp() => Speed = Math.Min(1.5, Math.Round(Speed + 0.05, 2));
+
+    [RelayCommand]
+    private void SpeedDown() => Speed = Math.Max(0.5, Math.Round(Speed - 0.05, 2));
+
+    partial void OnCountdownSecondsChanged(int value) => _settings.CountdownSeconds = value;
+
+    partial void OnTransposeChanged(int value)
+    {
+        TransposeText = value == 0 ? "无" : value > 0 ? $"+{value}" : value.ToString();
+        if (_suppressRebuild || !HasSong || _engine.IsJianpu) return;
+        _ = _engine.RebuildAsync(_engine.TrackIndex, value);
+    }
+
+    partial void OnSelectedTrackChanged(MidiTrackInfo? value)
+    {
+        if (_suppressRebuild || value == null || !HasSong) return;
+        _ = _engine.RebuildAsync(value.Index, Transpose);
+    }
+
+    [RelayCommand]
+    private async Task AutoTransposeAsync()
+    {
+        if (_engine.Song == null) return;
+        var notes = _engine.Song.GetTrackNotes(_engine.TrackIndex);
+        await _engine.RebuildAsync(_engine.TrackIndex, MelodyAnalyzer.BestTranspose(notes, new HarmonicaMapping()));
+    }
+
+    // ===== 状态刷新 =====
+
+    private void UpdatePlanInfo()
+    {
+        var plan = _engine.Plan;
+        _suppressRebuild = true;
+        try
         {
-            _online.Provider = s.OnlineProvider;
-            _online.CustomIndexUrl = s.CustomIndexUrl;
+            HasSong = plan is { IsValid: true };
+            SongTitle = string.IsNullOrEmpty(_engine.Title) ? "尚未选曲" : _engine.Title;
+            PlanEvents = plan?.Events;
+            DurationMs = Math.Max(1, plan?.DurationMs ?? 1);
+            DurationText = FormatTime(plan?.DurationMs ?? 0);
+            NoteCountText = plan?.ConvertedNoteCount.ToString() ?? "--";
+            ScoreText = plan == null ? "--" : plan.Score.ToString();
+            ScoreHint = plan == null ? "" : BuildScoreHint(plan);
+            BpmText = _engine.Song is { } s ? Math.Round(s.Bpm).ToString() : "--";
+
+            SongTracks.Clear();
+            if (_engine.Song != null)
+                foreach (var t in _engine.Song.Tracks.Where(t => t.NoteCount > 0 && !t.IsDrum))
+                    SongTracks.Add(t);
+            SelectedTrack = SongTracks.FirstOrDefault(t => t.Index == _engine.TrackIndex);
+            Transpose = _engine.Transpose;
+            TransposeText = Transpose == 0 ? "无" : Transpose > 0 ? $"+{Transpose}" : Transpose.ToString();
+            CanTune = _engine.Song != null;
+            PositionMs = 0;
+            PositionText = "0:00";
+        }
+        finally
+        {
+            _suppressRebuild = false;
         }
     }
+
+    private static string BuildScoreHint(PlaybackPlan p)
+    {
+        var parts = new List<string>();
+        if (p.ChordReducedCount > 0) parts.Add($"和弦取最高音 {p.ChordReducedCount}");
+        if (p.FoldedNoteCount > 0) parts.Add($"越界折叠 {p.FoldedNoteCount}");
+        if (p.TooCloseCount > 0) parts.Add($"过密跳过 {p.TooCloseCount}");
+        if (p.DroppedNoteCount > 0) parts.Add($"丢弃 {p.DroppedNoteCount}");
+        return parts.Count == 0 ? "完整还原" : string.Join(" · ", parts);
+    }
+
+    private void UpdateState()
+    {
+        var s = _engine.Current;
+        bool preview = _engine.CurrentMode == HarmonicaEngine.Mode.Preview;
+        IsRunning = _engine.IsRunning;
+        IsPreviewing = IsRunning && preview;
+
+        PlayGlyph = s == State.Playing && !preview ? Glyph.Pause : Glyph.Play;
+        PreviewGlyph = s == State.Playing && preview ? Glyph.Pause : Glyph.Headphone;
+
+        StateText = s switch
+        {
+            State.Idle => "未选曲",
+            State.Loading => "加载中",
+            State.Ready => "已就绪",
+            State.WaitingFocus => "等待游戏",
+            State.Countdown => "倒计时",
+            State.Playing => preview ? "试听中" : "吹奏中",
+            State.Paused => "已暂停",
+            _ => s.ToString(),
+        };
+        UpdateStageText();
+    }
+
+    private void UpdateStageText()
+    {
+        bool preview = _engine.CurrentMode == HarmonicaEngine.Mode.Preview;
+        StageText = _engine.Current switch
+        {
+            State.Idle => "选一首曲子，吹给山听",
+            State.Loading => "展卷中……",
+            State.Ready => GameFound
+                ? "已就绪 · 按 F8 或点 ▶，切回游戏后开始吹奏"
+                : "已就绪 · 点 🎧 可先在本机试听",
+            State.WaitingFocus => "请切到游戏窗口，拿出口琴 —— 切过去就开始倒计时",
+            State.Countdown => $"{_engine.CountdownRemaining}",
+            State.Playing => preview ? "试听中 · 本机发声，不会向游戏发送按键" : "吹奏中 · 切出游戏会自动暂停",
+            State.Paused => preview ? "试听已暂停" : "已暂停 · 回到游戏自动继续，或按 F8",
+            _ => "",
+        };
+    }
+
+    private void UpdateGameStatus()
+    {
+        GameFound = _watcher.IsFound;
+        GameFocused = _watcher.IsTargetFocused;
+        GameStatusText = !GameFound ? "未找到游戏窗口"
+            : GameFocused ? "游戏在前台"
+            : "已连接游戏（后台）";
+        if (GameFocused && _settings.OverlayAutoShow && !_overlayShownOnce)
+        {
+            _overlayShownOnce = true;
+            OverlayVisible = true;
+        }
+        UpdateStageText();
+    }
+
+    private void OnTick()
+    {
+        var plan = _engine.Plan;
+        if (!IsSeeking)
+        {
+            double pos = _engine.PositionMs;
+            if (Math.Abs(pos - PositionMs) >= 1)
+            {
+                PositionMs = pos;
+                PositionText = FormatTime(pos);
+            }
+        }
+
+        int idx = _engine.ActiveIndex;
+        if (idx != ActiveIndex || (_engine.IsRunning == false && ActiveHole >= 0 && idx < 0))
+        {
+            ActiveIndex = idx;
+            if (plan != null && idx >= 0 && idx < plan.Events.Count)
+            {
+                var keys = plan.Events[idx].Keys;
+                var main = keys.FirstOrDefault(k => k is >= GameKey.MainKey1 and <= GameKey.MainKey8);
+                ActiveHole = main == GameKey.None ? -1 : main - GameKey.MainKey1;
+                SharpOn = keys.Contains(GameKey.Sharp);
+                OctaveOn = keys.Contains(GameKey.OctaveUp);
+                OctaveDownOn = keys.Contains(GameKey.OctaveDown);
+            }
+            else if (_engine.IsRunning)
+            {
+                ActiveHole = -1;
+                SharpOn = OctaveOn = OctaveDownOn = false;
+            }
+        }
+
+        if (_engine.Current == State.Countdown && Countdown != _engine.CountdownRemaining)
+        {
+            Countdown = _engine.CountdownRemaining;
+            UpdateStageText();
+        }
+    }
+
+    // ===== 提示 =====
+
+    public void Toast(string text)
+    {
+        ToastText = text;
+        ToastVisible = true;
+        _toastTimer?.Stop();
+        _toastTimer = new DispatcherTimer(TimeSpan.FromSeconds(Math.Clamp(text.Length / 8.0, 3, 8)),
+            DispatcherPriority.Normal, (_, _) => { ToastVisible = false; _toastTimer?.Stop(); }, _ui);
+        _toastTimer.Start();
+    }
+
+    [RelayCommand]
+    private void DismissToast() => ToastVisible = false;
+
+    public static string FormatTime(double ms)
+    {
+        if (ms < 0) ms = 0;
+        var t = TimeSpan.FromMilliseconds(ms);
+        return t.TotalHours >= 1 ? t.ToString(@"h\:mm\:ss") : $"{(int)t.TotalMinutes}:{t.Seconds:00}";
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        _tick.Stop();
+        _slowTick.Stop();
+        _hotkeys.Dispose();
+        await _engine.DisposeAsync();
+        _watcher.Dispose();
+        _online.Dispose();
+        try { _settings.Save(); } catch { }
+    }
+
+    private static class State
+    {
+        public const HarmonicaEngine.State Idle = HarmonicaEngine.State.Idle;
+        public const HarmonicaEngine.State Loading = HarmonicaEngine.State.Loading;
+        public const HarmonicaEngine.State Ready = HarmonicaEngine.State.Ready;
+        public const HarmonicaEngine.State WaitingFocus = HarmonicaEngine.State.WaitingFocus;
+        public const HarmonicaEngine.State Countdown = HarmonicaEngine.State.Countdown;
+        public const HarmonicaEngine.State Playing = HarmonicaEngine.State.Playing;
+        public const HarmonicaEngine.State Paused = HarmonicaEngine.State.Paused;
+    }
+}
+
+/// <summary>Segoe Fluent Icons 字形</summary>
+public static class Glyph
+{
+    public const string Play = "";
+    public const string Pause = "";
+    public const string Headphone = "";
 }

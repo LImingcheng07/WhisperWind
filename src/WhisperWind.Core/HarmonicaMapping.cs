@@ -9,8 +9,9 @@ public enum GameKey
     None = 0,
     MainKey1, MainKey2, MainKey3, MainKey4,
     MainKey5, MainKey6, MainKey7, MainKey8,
-    MouseSide,    // 升半音
-    MouseMiddle,  // 高八度
+    Sharp,       // 半音（升半音，游戏默认鼠标中键）
+    OctaveUp,    // 升调（高八度，游戏默认鼠标右键）
+    OctaveDown,  // 降调（低八度，游戏默认鼠标左键）
 }
 
 public static class GameKeyList
@@ -24,17 +25,20 @@ public static class GameKeyList
 
 public static class NoteBindingExtensions
 {
-    public static bool RequiresMouse(this IReadOnlyList<GameKey> keys)
-        => keys.Any(k => k is GameKey.MouseSide or GameKey.MouseMiddle);
+    public static bool IsModifier(this GameKey key)
+        => key is GameKey.Sharp or GameKey.OctaveUp or GameKey.OctaveDown;
+
+    public static bool HasModifier(this IReadOnlyList<GameKey> keys) => keys.Any(IsModifier);
 }
 
 /// <summary>
 /// 三角洲口琴 8 音 + 鼠标修饰的按键映射。
 ///
-/// 游戏机制（2026-09 实测）：
-/// - 8 个主音键：固定 8 个自然音（C=Do）
-/// - 鼠标侧键（默认）= 升半音
-/// - 鼠标中键（默认）= 高八度
+/// 游戏机制（口琴界面底部提示）：
+/// - 8 个主音键（默认 Z X C V B N M ,）：C4..C5 八个自然音
+/// - 降调 = 鼠标左键（低八度）
+/// - 半音 = 鼠标中键（升半音）
+/// - 升调 = 鼠标右键（高八度）
 ///
 /// 键位和鼠标修饰都可以在 Settings 里改。
 /// </summary>
@@ -63,29 +67,35 @@ public sealed class HarmonicaMapping
     public IReadOnlyList<GameKey>? Resolve(int midiNote)
         => NoteToBinding.TryGetValue(midiNote, out var b) ? b : null;
 
-    /// <summary>返回一个不可变的默认映射表（C 大调 8 音 + 5 升半 + 高八度）</summary>
+    /// <summary>
+    /// 默认映射：三个八度 C3..C6。
+    /// 原调：主键 1..8 = C4 D4 E4 F4 G4 A4 B4 C5；升调 / 降调 = 同一主键 ± 12；
+    /// 半音 = 该音的自然音主键 + 半音修饰（+1）。每个音取修饰键最少的按法。
+    /// </summary>
     public static IReadOnlyDictionary<int, IReadOnlyList<GameKey>> DefaultMapping()
     {
         var dict = new Dictionary<int, IReadOnlyList<GameKey>>();
+        int[] naturals = { 60, 62, 64, 65, 67, 69, 71, 72 };
+        // E、B（以及高 do）上没有半音：E#=F、B#=C，直接用下一个自然音
+        bool[] canSharp = { true, true, false, true, true, true, false, false };
 
-        // 7 个主音（自然音）：C4 D4 E4 F4 G4 A4 B4
-        int[] naturals = { 60, 62, 64, 65, 67, 69, 71 };
-        for (int i = 0; i < naturals.Length; i++)
-            dict[naturals[i]] = new[] { GameKeyList.MainKeys[i] };
-
-        // 5 个升半音：#C #D #F #G #A → 主键 + 鼠标侧键
-        int[] sharps = { 61, 63, 66, 68, 70 };
-        for (int i = 0; i < sharps.Length; i++)
-            dict[sharps[i]] = new[] { GameKeyList.MainKeys[i], GameKey.MouseSide };
-
-        // 高八度（C5..B5）完整音阶
-        int[] octaveUpNat = { 72, 74, 76, 77, 79, 81, 83, 84 };
-        for (int i = 0; i < octaveUpNat.Length; i++)
-            dict[octaveUpNat[i]] = new[] { GameKeyList.MainKeys[i], GameKey.MouseMiddle };
-        int[] octaveUpSharp = { 73, 75, 78, 80, 82 };
-        for (int i = 0; i < octaveUpSharp.Length; i++)
-            dict[octaveUpSharp[i]] = new[] { GameKeyList.MainKeys[i], GameKey.MouseSide, GameKey.MouseMiddle };
-
+        (int shift, GameKey? mod)[] octaves = { (0, null), (12, GameKey.OctaveUp), (-12, GameKey.OctaveDown) };
+        foreach (var (shift, mod) in octaves)
+        {
+            for (int i = 0; i < naturals.Length; i++)
+            {
+                var key = GameKeyList.MainKeys[i];
+                Add(naturals[i] + shift, mod is { } m ? new[] { key, m } : new[] { key });
+                if (canSharp[i])
+                    Add(naturals[i] + shift + 1, mod is { } m2 ? new[] { key, GameKey.Sharp, m2 } : new[] { key, GameKey.Sharp });
+            }
+        }
         return dict;
+
+        void Add(int pitch, GameKey[] keys)
+        {
+            if (!dict.TryGetValue(pitch, out var old) || old.Count > keys.Length)
+                dict[pitch] = keys;
+        }
     }
 }
